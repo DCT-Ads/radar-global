@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Lifecycle {
+  DISCOVERY
+  PRE_LAUNCH
+  LIVE
+  PEAK
+  SATURATED
+  DECLINING
+}
+
+enum Confidence {
+  LOW
+  MED
+  HIGH
+}
+
+enum SourceStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+  DISABLED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum PlanSlug {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum Marketplace {
+  CLICKBANK
+  DIGISTORE
+  OTHER
+}
+
+enum SignalType {
+  NEW_DOMAIN
+  SUBDOMAIN_CHECKOUT
+  SSL_ISSUED
+  LANDING_LIVE
+  TREND_SPIKE
+  MARKETPLACE_LISTING
+}
+
+enum AlertType {
+  OPPORTUNITY_THRESHOLD
+  EARLY_SIGNAL
+  LIFECYCLE_CHANGE
+  NEW_LAUNCH
+}
+
+// ─── Auth / billing ──────────────────────────────────────
+
+model User {
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  passwordHash        String
+  name                String
+  role                Role     @default(USER)
+  locale              String   @default("en")
+  niche               String?
+  minCommissionPct    Decimal? @db.Decimal(5, 2)
+  onboardingCompleted Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  countries    Country[]
+  subscription Subscription?
+  favorites    Favorite[]
+  alerts       Alert[]
+  searches     Search[]
+  auditLogs    AuditLog[]
+}
+
+model Country {
+  id       String  @id @default(cuid())
+  iso2     String  @unique @db.Char(2)
+  iso3     String  @unique @db.Char(3)
+  name     String
+  namePt   String
+  nameEs   String
+  currency String  @db.Char(3)
+  isActive Boolean @default(true)
+
+  users     User[]
+  producers Producer[]
+  launches  Launch[]
+}
+
+model Plan {
+  id                    String   @id @default(cuid())
+  slug                  PlanSlug @unique
+  name                  String
+  priceCents            Int
+  currency              String   @default("USD") @db.Char(3)
+  dailyOpportunityLimit Int
+  countryLimit          Int
+  historyDays           Int
+  unlockCommission      Boolean
+  alertsEnabled         Boolean
+  alertsUnlimited       Boolean
+  earlySignalEnabled    Boolean
+  stripePriceId         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@index([planId])
+}
+
+// ─── Radar core ──────────────────────────────────────────
+
+model Producer {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String   @unique
+  website   String?
+  countryId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  country  Country? @relation(fields: [countryId], references: [id])
+  launches Launch[]
+}
+
+model Launch {
+  id           String    @id @default(cuid())
+  producerId   String
+  countryId    String?
+  title        String
+  slug         String    @unique
+  domain       String    @unique
+  niche        String?
+  description  String?
+  lifecycle    Lifecycle @default(DISCOVERY)
+  landingLive  Boolean?
+  hasCheckout  Boolean?
+  hasGoPath    Boolean?
+  hasPayPath   Boolean?
+  lastProbedAt DateTime?
+  firstSeenAt  DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  producer    Producer     @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  country     Country?     @relation(fields: [countryId], references: [id])
+  scores      Score[]
+  evidences   Evidence[]
+  signals     Signal[]
+  commissions Commission[]
+  favorites   Favorite[]
+  alerts      Alert[]
+
+  @@index([producerId])
+  @@index([lifecycle])
+  @@index([niche])
+}
+
+/// Histórico versionado — nunca update; sempre insert.
+model Score {
+  id              String     @id @default(cuid())
+  launchId        String
+  hype            Float
+  opportunity     Float
+  trend           Float
+  competition     Float
+  earlySignal     Float
+  dataQuality     Float
+  confidence      Confidence
+  weightsSnapshot Json?
+  computedAt      DateTime   @default(now())
+
+  launch Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  @@index([launchId, computedAt])
+}
+
+model Source {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  reliability Int
+  status      SourceStatus @default(ACTIVE)
+  lastRunAt   DateTime?
+  lastError   String?
+  config      Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  evidences   Evidence[]
+  signals     Signal[]
+  commissions Commission[]
+}
+
+model Signal {
+  id         String     @id @default(cuid())
+  launchId   String
+  sourceId   String
+  type       SignalType
+  value      Float?
+  payload    Json?
+  observedAt DateTime   @default(now())
+
+  launch    Launch     @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  source    Source     @relation(fields: [sourceId], references: [id])
+  evidences Evidence[]
+
+  @@index([launchId, observedAt])
+  @@index([sourceId])
+}
+
+/// Obrigatória para exibir qualquer dado de Launch.
+model Evidence {
+  id         String   @id @default(cuid())
+  launchId   String
+  sourceId   String
+  signalId   String?
+  url        String
+  title      String?
+  snippet    String?
+  raw        Json?
+  capturedAt DateTime @default(now())
+
+  launch Launch  @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  source Source  @relation(fields: [sourceId], references: [id])
+  signal Signal? @relation(fields: [signalId], references: [id])
+
+  @@index([launchId, capturedAt])
+  @@index([sourceId])
+}
+
+model Commission {
+  id            String      @id @default(cuid())
+  launchId      String
+  sourceId      String?
+  marketplace   Marketplace
+  gravity       Float?
+  commissionPct Decimal?    @db.Decimal(5, 2)
+  amountCents   Int?
+  currency      String      @default("USD") @db.Char(3)
+  affiliateUrl  String?
+  capturedAt    DateTime    @default(now())
+
+  launch Launch  @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  source Source? @relation(fields: [sourceId], references: [id])
+
+  @@index([launchId, capturedAt])
+}
+
+model Alert {
+  id              String    @id @default(cuid())
+  userId          String
+  launchId        String?
+  type            AlertType
+  threshold       Float?
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  launch Launch? @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  launchId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  launch Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, launchId])
+}
+
+model Search {
+  id        String   @id @default(cuid())
+  userId    String?
+  query     String
+  filters   Json?
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "title": "Radar Global",
+    "description": "Discover the next big launch before the market does."
+  },
+  "common": {
+    "appName": "Radar Global",
+    "tagline": "Discover the next big launch before the market does.",
+    "insufficientData": "Insufficient public data",
+    "language": "Language"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "explore": "Explore the Radar"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to your Radar account.",
+    "signupTitle": "Create your account",
+    "signupSubtitle": "Start scanning public launch signals.",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Log in",
+    "submitSignup": "Create account",
+    "hasAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "invalidCredentials": "Invalid email or password.",
+    "emailTaken": "This email is already registered.",
+    "genericError": "Something went wrong. Try again."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}",
+    "placeholder": "Hot launches and scores land in Sprint 3. Foundation is live."
+  },
+  "admin": {
+    "title": "Admin",
+    "placeholder": "Source status and scoring weights arrive in later sprints."
+  },
+  "home": {
+    "headline": "Radar Global",
+    "subtitle": "Real-time market intelligence for affiliates."
+  }
+}

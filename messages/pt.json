@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "title": "Radar Global",
+    "description": "Descubra o próximo grande lançamento antes do mercado."
+  },
+  "common": {
+    "appName": "Radar Global",
+    "tagline": "Descubra o próximo grande lançamento antes do mercado.",
+    "insufficientData": "Insufficient public data",
+    "language": "Idioma"
+  },
+  "nav": {
+    "dashboard": "Painel",
+    "admin": "Admin",
+    "login": "Entrar",
+    "signup": "Criar conta",
+    "logout": "Sair",
+    "explore": "Explorar o Radar"
+  },
+  "auth": {
+    "loginTitle": "Bem-vindo de volta",
+    "loginSubtitle": "Entre na sua conta do Radar.",
+    "signupTitle": "Crie sua conta",
+    "signupSubtitle": "Comece a monitorar sinais públicos de lançamento.",
+    "name": "Nome",
+    "email": "E-mail",
+    "password": "Senha",
+    "submitLogin": "Entrar",
+    "submitSignup": "Criar conta",
+    "hasAccount": "Já tem uma conta?",
+    "noAccount": "Ainda não tem conta?",
+    "invalidCredentials": "E-mail ou senha inválidos.",
+    "emailTaken": "Este e-mail já está cadastrado.",
+    "genericError": "Algo deu errado. Tente de novo."
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo, {name}",
+    "placeholder": "Hot launches e scores entram na Sprint 3. A fundação está no ar."
+  },
+  "admin": {
+    "title": "Admin",
+    "placeholder": "Status das sources e pesos de scoring chegam nas próximas sprints."
+  },
+  "home": {
+    "headline": "Radar Global",
+    "subtitle": "Inteligência de mercado em tempo real para afiliados."
+  }
+}
