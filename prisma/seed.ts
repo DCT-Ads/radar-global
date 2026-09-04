@@ -1,4 +1,5 @@
 import { PlanSlug, PrismaClient } from "@prisma/client";
+import { DEFAULT_CRTSH_CONFIG } from "../lib/collectors/config";
 
 const prisma = new PrismaClient();
 
@@ -105,9 +106,41 @@ async function seedPlans() {
   console.log(`Seeded ${PLANS.length} plans`);
 }
 
+async function seedSources() {
+  await prisma.source.upsert({
+    where: { slug: "crtsh" },
+    update: {
+      name: "crt.sh Certificate Transparency",
+      reliability: 95,
+    },
+    create: {
+      slug: "crtsh",
+      name: "crt.sh Certificate Transparency",
+      reliability: 95,
+      config: DEFAULT_CRTSH_CONFIG,
+    },
+  });
+
+  await prisma.source.upsert({
+    where: { slug: "http_probe" },
+    update: {
+      name: "HTTP availability probe",
+      reliability: 90,
+    },
+    create: {
+      slug: "http_probe",
+      name: "HTTP availability probe",
+      reliability: 90,
+    },
+  });
+
+  console.log("Seeded 2 sources");
+}
+
 async function main() {
   await seedCountries();
   await seedPlans();
+  await seedSources();
 }
 
 main()
