@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
 import { enqueueOrRunCollection } from "@/lib/queue/collect";
+import { enqueueOrRunReprobe } from "@/lib/queue/reprobe";
 
 export const maxDuration = 60;
 
@@ -12,7 +13,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const outcome = await enqueueOrRunCollection();
+    const [outcome] = await Promise.all([
+      enqueueOrRunCollection(),
+      enqueueOrRunReprobe("inline"),
+    ]);
     await prisma.auditLog.create({
       data: {
         userId: user.id,

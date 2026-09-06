@@ -1,4 +1,10 @@
-import { ageInDays, apexDomain, hostsFromNameValue, isCheckoutHost } from "./domains";
+import {
+  ageInDays,
+  apexDomain,
+  domainIncludesKeyword,
+  hostsFromNameValue,
+  isCheckoutHost,
+} from "./domains";
 
 export type CrtshEntry = {
   id: number;
@@ -20,8 +26,8 @@ export type DiscoveredDomain = {
   evidenceUrl: string;
 };
 
-const CRTSH_TIMEOUT_MS = 25_000;
-const CRTSH_RETRIES = 3;
+const CRTSH_TIMEOUT_MS = 20_000;
+const CRTSH_RETRIES = 4;
 
 function isCrtshEntry(value: unknown): value is CrtshEntry {
   if (typeof value !== "object" || value === null) {
@@ -36,50 +42,58 @@ function isCrtshEntry(value: unknown): value is CrtshEntry {
   );
 }
 
-async function fetchCrtshOnce(url: URL): Promise<CrtshEntry[]> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), CRTSH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "RadarGlobalBot/1.0 (public CT lookup)",
-      },
-      signal: controller.signal,
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error(`crt.sh returned ${response.status}`);
-    }
-
-    const payload: unknown = await response.json();
-    if (!Array.isArray(payload)) {
-      throw new Error("crt.sh returned a non-JSON list");
-    }
-
-    return payload.filter(isCrtshEntry);
-  } finally {
-    clearTimeout(timeout);
-  }
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function fetchCrtshEntries(keyword: string): Promise<CrtshEntry[]> {
   const url = new URL("https://crt.sh/");
-  url.searchParams.set("q", keyword);
+  url.searchParams.set("q", `%${keyword}%`);
   url.searchParams.set("exclude", "expired");
   url.searchParams.set("output", "json");
 
   let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= CRTSH_RETRIES; attempt += 1) {
+  for (let attempt = 0; attempt < CRTSH_RETRIES; attempt += 1) {
     try {
-      return await fetchCrtshOnce(url);
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "RadarGlobal/1.0",
+        },
+        signal: AbortSignal.timeout(CRTSH_TIMEOUT_MS),
+        cache: "no-store",
+      });
+
+      if (response.status === 429) {
+        const wait = 10_000 * (attempt + 1);
+        console.log(`crt.sh rate limit (429). Aguardando ${wait / 1000}s...`);
+        lastError = new Error("crt.sh returned 429");
+        await sleep(wait);
+        continue;
+      }
+
+      if (response.status === 502 || response.status === 503) {
+        lastError = new Error(`crt.sh returned ${response.status}`);
+        await sleep(3_000 * (attempt + 1));
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`crt.sh returned ${response.status}`);
+      }
+
+      const payload: unknown = await response.json();
+      if (!Array.isArray(payload)) {
+        throw new Error("crt.sh returned a non-JSON list");
+      }
+
+      return payload.filter(isCrtshEntry);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("crt.sh request failed");
-      if (attempt < CRTSH_RETRIES) {
-        await new Promise((resolve) => setTimeout(resolve, 1_000 * 2 ** (attempt - 1)));
+      if (attempt === CRTSH_RETRIES - 1) {
+        throw lastError;
       }
+      await sleep(3_000 * (attempt + 1));
     }
   }
 
@@ -93,7 +107,6 @@ export function discoverDomainsFromEntries(
   limit: number,
 ): DiscoveredDomain[] {
   const now = new Date();
-  const needle = keyword.toLowerCase();
   const grouped = new Map<string, DiscoveredDomain>();
 
   for (const entry of entries) {
@@ -105,7 +118,7 @@ export function discoverDomainsFromEntries(
     const hosts = hostsFromNameValue(entry.name_value, entry.common_name);
     for (const host of hosts) {
       const domain = apexDomain(host);
-      if (!domain.includes(needle)) {
+      if (!domainIncludesKeyword(domain, keyword)) {
         continue;
       }
 

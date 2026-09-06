@@ -23,6 +23,12 @@ export async function AppSidebar({ role }: AppSidebarProps) {
         >
           {t("dashboard")}
         </Link>
+        <Link
+          href="/radar"
+          className="rounded-md px-3 py-2 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+        >
+          {t("radar")}
+        </Link>
         {role === "ADMIN" ? (
           <Link
             href="/admin"

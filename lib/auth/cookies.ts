@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import {
   SESSION_COOKIE,
   SESSION_MAX_AGE_SECONDS,
@@ -24,9 +24,21 @@ export async function clearSessionCookie() {
   store.delete(SESSION_COOKIE);
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
+async function tokenFromRequest() {
   const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
+  const fromCookie = store.get(SESSION_COOKIE)?.value;
+  if (fromCookie) {
+    return fromCookie;
+  }
+  const authorization = (await headers()).get("authorization");
+  if (authorization?.startsWith("Bearer ")) {
+    return authorization.slice(7).trim();
+  }
+  return null;
+}
+
+export async function getSession(): Promise<SessionPayload | null> {
+  const token = await tokenFromRequest();
   if (!token) {
     return null;
   }

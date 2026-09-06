@@ -1,7 +1,9 @@
 # RADAR GLOBAL — Scoring & MVP (Bloco B)
 
-> Fonte de verdade do "cérebro" do sistema.
-> Regra de ouro: nenhum score é inventado. Sem dado (Evidence) → sem score.
+> ⚠️ **OBSOLETO — fórmula substituída por média ponderada.** Ver `docs/10-fase-6-scoring.md`.
+>
+> Este arquivo é histórico. Não use a exponencial abaixo no motor (Sprint 2).
+> Sem Evidence → sem score.
 
 ---
 
@@ -13,7 +15,10 @@
 - Score alto + confidence baixa = mostrado com aviso ⚠️ (nunca escondido)
 
 ### 6.1 EARLY SIGNAL SCORE (detecta ANTES — o diferencial)
-Fórmula: ES = 100 * (1 - e^(-Σ wi*si))
+
+DEPRECATED — não implementar. Vigente: `EarlySignal = 100 × (Σ wi·si) / (Σ wi)` em `docs/10-fase-6-scoring.md`.
+
+Fórmula histórica: ES = 100 * (1 - e^(-Σ wi*si))
 
 Sinais (todos de fonte pública/legal):
 | Sinal                                   | Fonte             | Peso |
@@ -55,6 +60,8 @@ Pesos MVP (ajustáveis no painel admin, NUNCA hardcoded):
 | Commission             | 0.15 |
 
 O multiplicador (DQ/100) = honestidade: dado ruim derruba a oportunidade.
+
+Opportunity vigente: normalizado de (demanda × novidade × (1/competição) × tempo). Ver `docs/10-fase-6-scoring.md`.
 
 ### 6.6 DATA QUALITY SCORE
 DQ = 100 * ( Σ rj*fj / Σ rj )

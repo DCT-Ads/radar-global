@@ -50,6 +50,18 @@ export function cleanHost(raw: string): string | null {
   return host;
 }
 
+export function publicSuffix(host: string): string {
+  const parts = host.toLowerCase().split(".").filter(Boolean);
+  if (parts.length === 0) {
+    return "";
+  }
+  const lastTwo = parts.slice(-2).join(".");
+  if (MULTI_PART_TLDS.has(lastTwo)) {
+    return lastTwo;
+  }
+  return parts[parts.length - 1] ?? "";
+}
+
 export function apexDomain(host: string): string {
   const parts = host.split(".");
   if (parts.length < 2) {
@@ -81,6 +93,10 @@ export function hostsFromNameValue(nameValue: string, commonName: string): strin
     .map((item) => cleanHost(item))
     .filter((item): item is string => item !== null);
   return [...new Set(raw)];
+}
+
+export function domainIncludesKeyword(domain: string, keyword: string): boolean {
+  return domain.includes(keyword.toLowerCase());
 }
 
 export function ageInDays(date: Date, now = new Date()): number {

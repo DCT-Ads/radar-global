@@ -28,6 +28,9 @@ export function MobileSidebar({ role }: MobileSidebarProps) {
           <Link href="/dashboard" className="rounded-md px-3 py-2 hover:bg-muted">
             {t("dashboard")}
           </Link>
+          <Link href="/radar" className="rounded-md px-3 py-2 hover:bg-muted">
+            {t("radar")}
+          </Link>
           {role === "ADMIN" ? (
             <Link href="/admin" className="rounded-md px-3 py-2 hover:bg-muted">
               {t("admin")}

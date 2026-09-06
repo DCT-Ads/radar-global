@@ -28,10 +28,13 @@ export default async function HomePage({ params }: HomePageProps) {
         <p className="mt-4 text-lg text-muted-foreground">{t("home.subtitle")}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild>
-            <Link href="/signup">{t("nav.signup")}</Link>
+            <Link href="/radar">{t("nav.explore")}</Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/login">{t("nav.login")}</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/signup">{t("nav.signup")}</Link>
           </Button>
         </div>
       </div>

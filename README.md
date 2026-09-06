@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Radar Global
 
-## Getting Started
+SaaS de inteligência de mercado para afiliados. Monitora sinais públicos (Certificate Transparency via crt.sh + HTTP probe) e transforma em launches rastreados.
 
-First, run the development server:
+Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma/PostgreSQL + next-intl (en/pt/es).
+
+## Pré-requisitos
+
+- Node.js 20+
+- PostgreSQL (Neon, Supabase ou local)
+- Redis (opcional; só para o worker BullMQ e o cron de 6h em fila)
+
+## Variáveis de ambiente
+
+Copie `.env.example` para `.env` e preencha.
+
+**Obrigatórias em produção**
+
+| Variável | Uso |
+|---|---|
+| `DATABASE_URL` | Postgres |
+| `JWT_SECRET` | Assinatura da sessão (`rg_session`) |
+| `CRON_SECRET` | Autoriza `GET /api/cron/collect` |
+
+**Admin (seed)**
+
+| Variável | Uso |
+|---|---|
+| `ADMIN_EMAIL` | E-mail do usuário ADMIN |
+| `ADMIN_PASSWORD` | Senha do ADMIN (hash com bcryptjs) |
+
+Em desenvolvimento, se `ADMIN_EMAIL` / `ADMIN_PASSWORD` forem omitidos, o seed cria `admin@radar.local` / `ChangeMeAdmin123!`. Em produção o seed **não** cria admin sem essas variáveis.
+
+**Opcionais**
+
+| Variável | Uso |
+|---|---|
+| `REDIS_URL` | Fila BullMQ (`npm run worker`) |
+| `COLLECT_KEYWORDS` | Keywords da coleta pontual (ex.: `keto`) |
+| `COLLECT_MAX_DOMAINS` | Limite de domínios por run |
+
+## Ordem de comandos
 
 ```bash
+npm install
+npx prisma migrate dev
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Este banco já tinha o schema via `db push`. A migration `init` foi gerada a partir do schema atual e marcada como aplicada (`migrate resolve --applied`) — **sem reset e sem perda de dados**. Bancos novos usam só `migrate deploy`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Em produção (CI/host), use migrate deploy em vez de `migrate dev`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npx prisma migrate deploy
+npm run db:seed
+npm run build
+npm run start
+```
 
-## Learn More
+O app sobe em `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Como criar o admin
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Defina `ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env`.
+2. Rode `npm run db:seed` (idempotente: rodar 2x não duplica; promove o e-mail a `ADMIN` e garante subscription FREE).
+3. Entre em `/login` e acesse `/admin`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sem seed de admin, o signup só cria `USER` e o painel `/admin` fica bloqueado.
 
-## Deploy on Vercel
+## Collector
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Consulta crt.sh (domínios com certificado < 30 dias), faz HTTP probe (`/`, `/checkout`, `/go`, `/pay`) e grava Producer, Launch, Signal e Evidence.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Coleta pontual (sem Redis)**
+
+```bash
+npm run collect
+```
+
+Ou, logado como ADMIN, use **Run collector** em `/admin`.
+
+**Worker + cron 6h (precisa de Redis)**
+
+```bash
+npm run worker
+```
+
+A rota `GET /api/cron/collect` (Vercel cron a cada 6h) também dispara a coleta. `GET /api/cron/reprobe` re-sonda só WhoisDS com `launchPending: true`. Em produção envie `Authorization: Bearer $CRON_SECRET`.

@@ -1,4 +1,5 @@
 import { PlanSlug, PrismaClient } from "@prisma/client";
+import { hashPassword } from "../lib/auth/password";
 import { DEFAULT_CRTSH_CONFIG } from "../lib/collectors/config";
 
 const prisma = new PrismaClient();
@@ -137,10 +138,114 @@ async function seedSources() {
   console.log("Seeded 2 sources");
 }
 
+function adminSeedCredentials() {
+  const fromEnvEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const fromEnvPassword = process.env.ADMIN_PASSWORD;
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (fromEnvEmail && fromEnvPassword) {
+    return { email: fromEnvEmail, password: fromEnvPassword };
+  }
+
+  if (isProd) {
+    return null;
+  }
+
+  return {
+    email: fromEnvEmail || "admin@radar.local",
+    password: fromEnvPassword || "ChangeMeAdmin123!",
+  };
+}
+
+async function seedAdmin() {
+  const credentials = adminSeedCredentials();
+  if (!credentials) {
+    console.log("Skipping admin seed: set ADMIN_EMAIL and ADMIN_PASSWORD in production");
+    return;
+  }
+
+  const freePlan = await prisma.plan.findUnique({ where: { slug: PlanSlug.FREE } });
+  if (!freePlan) {
+    throw new Error("FREE plan is missing; seed plans before admin");
+  }
+
+  const passwordHash = await hashPassword(credentials.password);
+  const user = await prisma.user.upsert({
+    where: { email: credentials.email },
+    update: {
+      role: "ADMIN",
+      passwordHash,
+      name: "Admin",
+    },
+    create: {
+      email: credentials.email,
+      passwordHash,
+      name: "Admin",
+      role: "ADMIN",
+    },
+  });
+
+  await prisma.subscription.upsert({
+    where: { userId: user.id },
+    update: { planId: freePlan.id, status: "ACTIVE" },
+    create: {
+      userId: user.id,
+      planId: freePlan.id,
+      status: "ACTIVE",
+    },
+  });
+
+  console.log(`Seeded admin ${credentials.email}`);
+}
+
+const DEV_TEST_EMAIL = "teste@dev.com";
+const DEV_TEST_PASSWORD = "senha123";
+
+async function seedDevUser() {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  const freePlan = await prisma.plan.findUnique({ where: { slug: PlanSlug.FREE } });
+  if (!freePlan) {
+    throw new Error("FREE plan is missing; seed plans before dev user");
+  }
+
+  const passwordHash = await hashPassword(DEV_TEST_PASSWORD);
+  const user = await prisma.user.upsert({
+    where: { email: DEV_TEST_EMAIL },
+    update: {
+      passwordHash,
+      name: "Teste Dev",
+      role: "USER",
+    },
+    create: {
+      email: DEV_TEST_EMAIL,
+      passwordHash,
+      name: "Teste Dev",
+      role: "USER",
+    },
+  });
+
+  await prisma.subscription.upsert({
+    where: { userId: user.id },
+    update: { planId: freePlan.id, status: "ACTIVE" },
+    create: {
+      userId: user.id,
+      planId: freePlan.id,
+      status: "ACTIVE",
+    },
+  });
+
+  console.log(`Seeded dev user ${DEV_TEST_EMAIL}`);
+}
+
 async function main() {
   await seedCountries();
   await seedPlans();
   await seedSources();
+  await seedAdmin();
+  await seedDevUser();
 }
 
 main()

@@ -1,5 +1,8 @@
 # PROJETO: RADAR GLOBAL — SaaS de Inteligência de Mercado para Afiliados
 
+> ⚠️ **OBSOLETO como prompt vigente.** Use `docs/12-fase-8-master-prompt.md`.
+> Este arquivo é histórico (Sprint 0 original, Next 14, tema ouro).
+
 Você é um engenheiro sênior full-stack. Vamos construir um SaaS do zero, numa pasta vazia. Trabalhe SPRINT POR SPRINT — não gere tudo de uma vez. Ao fim de cada sprint, pare e me peça para revisar.
 
 ## VISÃO DO PRODUTO
@@ -26,6 +29,9 @@ Models: User, Producer, Launch, Score, Evidence, Source, Signal, Commission, Ale
 - Enums: Role, Lifecycle(DISCOVERY→...→DECLINING), Confidence(LOW/MED/HIGH), SourceStatus.
 
 ## SCORING (implementar na Sprint 2)
+
+> Metodologia vigente: `docs/10-fase-6-scoring.md` (média ponderada). As linhas abaixo são históricas.
+
 - EARLY SIGNAL: ES = 100*(1 - e^(-Σwi*si)), com decaimento e^(-λt), meia-vida 7d
 - OPPORTUNITY: média ponderada [ES 0.30, Trend 0.20, (100-Comp) 0.20, Hype 0.15, Commission 0.15] * (DQ/100)
 - DATA QUALITY: DQ = Σ(rj*fj)/Σrj, rj=confiabilidade da fonte, fj=frescor e^(-λ*idade)

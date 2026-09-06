@@ -5,6 +5,9 @@ import { DEFAULT_CRTSH_CONFIG } from "@/lib/collectors/config";
 export const SOURCE_SLUGS = {
   crtsh: "crtsh",
   httpProbe: "http_probe",
+  nrd: "whoisds",
+  digistore24: "digistore24",
+  youtube: "youtube",
 } as const;
 
 const SOURCE_SEED: Array<{
@@ -23,6 +26,24 @@ const SOURCE_SEED: Array<{
     slug: SOURCE_SLUGS.httpProbe,
     name: "HTTP availability probe",
     reliability: 90,
+    config: undefined,
+  },
+  {
+    slug: SOURCE_SLUGS.nrd,
+    name: "WhoisDS newly registered domains",
+    reliability: 85,
+    config: undefined,
+  },
+  {
+    slug: SOURCE_SLUGS.digistore24,
+    name: "Digistore24 marketplace",
+    reliability: 80,
+    config: undefined,
+  },
+  {
+    slug: SOURCE_SLUGS.youtube,
+    name: "YouTube Data API mostPopular",
+    reliability: 80,
     config: undefined,
   },
 ];

@@ -14,11 +14,13 @@ enum Role {
   ADMIN
 }
 
-enum Lifecycle {
+enum LaunchStatus {
   DISCOVERY
+  EARLY_SIGNAL
   PRE_LAUNCH
-  LIVE
-  PEAK
+  LAUNCH_IMMINENT
+  LAUNCHED
+  GROWING
   SATURATED
   DECLINING
 }
@@ -57,11 +59,29 @@ enum Marketplace {
 
 enum SignalType {
   NEW_DOMAIN
-  SUBDOMAIN_CHECKOUT
-  SSL_ISSUED
-  LANDING_LIVE
-  TREND_SPIKE
-  MARKETPLACE_LISTING
+  NEW_SUBDOMAIN
+  RSS_ITEM
+  YOUTUBE_VIDEO
+  LANDING_PAGE
+  WHOIS_CHANGE
+}
+
+enum SignalStatus {
+  NEW
+  ENRICHING
+  CANDIDATE
+  VERIFIED
+  DISCARDED
+}
+
+enum EvidenceType {
+  OFFICIAL_PAGE
+  RDAP
+  RSS
+  YOUTUBE
+  LANDING_PAGE
+  CRT_SH
+  MANUAL
 }
 
 enum AlertType {
@@ -150,16 +170,27 @@ model Subscription {
 // ─── Radar core ──────────────────────────────────────────
 
 model Producer {
-  id        String   @id @default(cuid())
-  name      String
-  domain    String   @unique
-  website   String?
-  countryId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  domain       String    @unique
+  website      String?
+  email        String?
+  instagram    String?
+  youtube      String?
+  facebook     String?
+  linkedin     String?
+  x            String?
+  companyName  String?
+  contactScore Int?
+  enrichedAt   DateTime?
+  countryId    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  country  Country? @relation(fields: [countryId], references: [id])
-  launches Launch[]
+  country   Country?   @relation(fields: [countryId], references: [id])
+  launches  Launch[]
+  signals   Signal[]
+  evidences Evidence[]
 }
 
 model Launch {
@@ -171,7 +202,7 @@ model Launch {
   domain       String    @unique
   niche        String?
   description  String?
-  lifecycle    Lifecycle @default(DISCOVERY)
+  status       LaunchStatus @default(DISCOVERY) @map("lifecycle")
   landingLive  Boolean?
   hasCheckout  Boolean?
   hasGoPath    Boolean?
@@ -192,7 +223,7 @@ model Launch {
   alerts      Alert[]
 
   @@index([producerId])
-  @@index([lifecycle])
+  @@index([status])
   @@index([niche])
 }
 
@@ -228,44 +259,64 @@ model Source {
   updatedAt   DateTime     @updatedAt
 
   evidences   Evidence[]
-  signals     Signal[]
   commissions Commission[]
 }
 
 model Signal {
-  id         String     @id @default(cuid())
-  launchId   String
-  sourceId   String
-  type       SignalType
-  value      Float?
-  payload    Json?
-  observedAt DateTime   @default(now())
+  id           String       @id @default(cuid())
+  type         SignalType
+  source       String
+  value        String
+  rawData      Json?
+  domain       String?
+  url          String?
+  keyword      String?
+  niche        String?
+  countryHint  String?
+  langHint     String?
+  confidence   Int          @default(0)
+  status       SignalStatus @default(NEW)
+  producerId   String?
+  launchId     String?
+  discoveredAt DateTime     @default(now())
+  verifiedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  launch    Launch     @relation(fields: [launchId], references: [id], onDelete: Cascade)
-  source    Source     @relation(fields: [sourceId], references: [id])
+  producer  Producer?  @relation(fields: [producerId], references: [id], onDelete: SetNull)
+  launch    Launch?    @relation(fields: [launchId], references: [id], onDelete: SetNull)
   evidences Evidence[]
 
-  @@index([launchId, observedAt])
-  @@index([sourceId])
+  @@unique([source, value])
+  @@index([type])
+  @@index([status])
+  @@index([niche])
+  @@index([countryHint])
 }
 
-/// Obrigatória para exibir qualquer dado de Launch.
+/// Obrigatória para exibir qualquer dado de Launch/Producer.
+/// App exige launchId OU producerId (não há check no banco).
 model Evidence {
-  id         String   @id @default(cuid())
-  launchId   String
+  id         String       @id @default(cuid())
+  launchId   String?
+  producerId String?
   sourceId   String
   signalId   String?
+  type       EvidenceType
   url        String
   title      String?
   snippet    String?
   raw        Json?
-  capturedAt DateTime @default(now())
+  confidence Int          @default(0)
+  capturedAt DateTime     @default(now())
 
-  launch Launch  @relation(fields: [launchId], references: [id], onDelete: Cascade)
-  source Source  @relation(fields: [sourceId], references: [id])
-  signal Signal? @relation(fields: [signalId], references: [id])
+  launch   Launch?  @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  producer Producer? @relation(fields: [producerId], references: [id], onDelete: SetNull)
+  source   Source   @relation(fields: [sourceId], references: [id])
+  signal   Signal?  @relation(fields: [signalId], references: [id])
 
   @@index([launchId, capturedAt])
+  @@index([producerId])
   @@index([sourceId])
 }
 
