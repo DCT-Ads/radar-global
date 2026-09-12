@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { redirect } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
 import { hasPremiumAccess } from "./access";
 import { getCurrentUser } from "./session";
 import { requireUser } from "./require-user";
@@ -19,12 +20,13 @@ export async function requirePremiumApi() {
 }
 
 export async function requirePremiumPage(locale: string) {
+  const safeLocale = assertLocale(locale);
   const user = await getCurrentUser();
   if (!user) {
-    redirect({ href: "/login", locale });
+    redirect({ href: "/login", locale: safeLocale });
   }
   if (!hasPremiumAccess(user)) {
-    redirect({ href: "/upgrade", locale });
+    redirect({ href: "/upgrade", locale: safeLocale });
   }
   return user;
 }

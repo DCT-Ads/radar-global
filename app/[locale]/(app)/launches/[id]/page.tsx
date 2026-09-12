@@ -17,8 +17,9 @@ type LaunchPageProps = {
 };
 
 export default async function LaunchPage({ params }: LaunchPageProps) {
-  const { locale, id } = await params;
-  setRequestLocale(assertLocale(locale));
+  const { locale: rawLocale, id } = await params;
+  const locale = assertLocale(rawLocale);
+  setRequestLocale(locale);
   const t = await getTranslations("radar");
   const common = await getTranslations("common");
   const format = await getFormatter();
