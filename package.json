@@ -13,6 +13,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "worker": "tsx workers/index.ts",
     "collect": "tsx workers/run-once.ts",
+    "collect:muncheye": "tsx scripts/persist-muncheye.ts",
     "collect:test": "tsx scripts/test-collector.ts",
     "signals:enrich": "tsx scripts/enrich-signals.ts",
     "collect:nrd": "tsx scripts/test-nrd.ts",
@@ -22,6 +23,7 @@
     "test:youtube": "tsx scripts/test-youtube.ts",
     "test:scoring": "tsx lib/scoring/early-signal.test.ts",
     "test:review-identity": "tsx lib/signals/review-identity.test.ts",
+    "test:anti-parking": "tsx lib/signals/anti-parking.test.ts",
     "test:producer-contact": "tsx lib/producers/contact.test.ts",
     "test:producer-enrich": "tsx lib/producers/enrich.test.ts",
     "reprobe:nrd": "tsx scripts/reprobe-nrd.ts"
@@ -30,6 +32,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
     "@hookform/resolvers": "^5.9.1",
     "@prisma/client": "^6.19.3",
     "@radix-ui/react-dialog": "^1.1.23",
