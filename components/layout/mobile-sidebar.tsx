@@ -1,18 +1,17 @@
 "use client";
 
-import type { Role } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import type { AccessPlan, Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { hasPremiumAccess } from "@/lib/auth/access";
+import { AppNav } from "@/components/layout/app-nav";
 
 type MobileSidebarProps = {
   role: Role;
+  plan: AccessPlan;
 };
 
-export function MobileSidebar({ role }: MobileSidebarProps) {
-  const t = useTranslations("nav");
-
+export function MobileSidebar({ role, plan }: MobileSidebarProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -24,19 +23,11 @@ export function MobileSidebar({ role }: MobileSidebarProps) {
         <SheetHeader>
           <SheetTitle className="text-primary">Radar Global</SheetTitle>
         </SheetHeader>
-        <nav className="mt-6 flex flex-col gap-2 text-sm">
-          <Link href="/dashboard" className="rounded-md px-3 py-2 hover:bg-muted">
-            {t("dashboard")}
-          </Link>
-          <Link href="/radar" className="rounded-md px-3 py-2 hover:bg-muted">
-            {t("radar")}
-          </Link>
-          {role === "ADMIN" ? (
-            <Link href="/admin" className="rounded-md px-3 py-2 hover:bg-muted">
-              {t("admin")}
-            </Link>
-          ) : null}
-        </nav>
+        <AppNav
+          role={role}
+          premiumLocked={!hasPremiumAccess({ role, plan })}
+          className="mt-6 gap-2"
+        />
       </SheetContent>
     </Sheet>
   );

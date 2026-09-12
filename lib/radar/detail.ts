@@ -1,5 +1,6 @@
 import { ageInDays } from "@/lib/collectors/domains";
 import { prisma } from "@/lib/prisma";
+import { firstSeenAtFromLaunch } from "@/lib/radar/first-seen";
 import { extractProducerContact, type ProducerContact } from "@/lib/producers/contact";
 import { enrichProducerById, isProducerEnrichmentDue } from "@/lib/producers/enrich";
 import { computeEarlySignal } from "@/lib/scoring/early-signal";
@@ -9,6 +10,27 @@ import {
   isUpcomingLaunch,
   landingLiveFromRaw,
 } from "@/lib/signals/saturation";
+
+export function formatAffiliateCommission(commission?: {
+  commissionPct?: { toString(): string } | number | null;
+  amountCents?: number | null;
+  currency?: string | null;
+} | null) {
+  if (!commission) {
+    return null;
+  }
+  if (commission.commissionPct != null) {
+    const pct = Number(commission.commissionPct.toString());
+    if (!Number.isNaN(pct)) {
+      return `${pct}%`;
+    }
+  }
+  if (commission.amountCents != null) {
+    const amount = (commission.amountCents / 100).toFixed(2);
+    return `${amount} ${commission.currency ?? "USD"}`;
+  }
+  return null;
+}
 
 export async function getRadarLaunch(id: string) {
   const [launch, keywordCounts] = await Promise.all([
@@ -26,6 +48,7 @@ export async function getRadarLaunch(id: string) {
           orderBy: { discoveredAt: "desc" },
         },
         scores: { orderBy: { computedAt: "desc" }, take: 1 },
+        commissions: { orderBy: { capturedAt: "desc" }, take: 1 },
       },
     }),
     prisma.signal.groupBy({
@@ -45,8 +68,12 @@ export async function getRadarLaunch(id: string) {
     }
   }
 
-  const scored = computeEarlySignal({
+  const firstSeenAt = firstSeenAtFromLaunch({
     firstSeenAt: launch.firstSeenAt,
+    signals: launch.signals,
+  });
+  const scored = computeEarlySignal({
+    firstSeenAt,
     evidences: launch.evidences.map((evidence) => ({
       capturedAt: evidence.capturedAt,
       url: evidence.url,
@@ -68,7 +95,7 @@ export async function getRadarLaunch(id: string) {
     medianVolume: median,
     p75Volume: p75,
     confidence: latestSignal?.confidence ?? 0,
-    firstSeenDaysAgo: ageInDays(launch.firstSeenAt),
+    firstSeenDaysAgo: ageInDays(firstSeenAt),
   });
   const upcoming = launch.signals.some((signal) =>
     isUpcomingLaunch({
@@ -78,7 +105,7 @@ export async function getRadarLaunch(id: string) {
   );
 
   return {
-    launch,
+    launch: { ...launch, firstSeenAt },
     scored,
     saturation,
     upcoming,
@@ -94,13 +121,14 @@ export async function getRadarLaunch(id: string) {
   };
 }
 
-function contactFromRecords(input: {
+export function contactFromRecords(input: {
   email?: string | null;
   instagram?: string | null;
   youtube?: string | null;
   facebook?: string | null;
   linkedin?: string | null;
   x?: string | null;
+  telegram?: string | null;
   companyName?: string | null;
   name?: string | null;
   domain?: string | null;
@@ -126,6 +154,7 @@ function contactFromRecords(input: {
       facebook: input.facebook,
       linkedin: input.linkedin,
       x: input.x,
+      telegram: input.telegram,
       companyName: input.companyName,
       name: input.name,
       domain: input.domain,
@@ -162,7 +191,7 @@ export async function getRadarProducer(id: string) {
           },
           signals: {
             where: { status: "VERIFIED" },
-            select: { url: true, rawData: true },
+            select: { url: true, rawData: true, source: true },
           },
         },
       },

@@ -14,6 +14,7 @@ export async function getCurrentUser() {
       email: true,
       name: true,
       role: true,
+      plan: true,
       locale: true,
       subscription: {
         select: {

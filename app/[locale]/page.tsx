@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
@@ -9,7 +10,7 @@ type HomePageProps = {
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations();
 
   return (

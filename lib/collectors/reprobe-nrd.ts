@@ -1,19 +1,32 @@
 import type { Prisma, SignalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { NRD_SOURCE } from "@/lib/collectors/nrd";
+import { CRTSH_SOURCE } from "@/lib/signals/persist-crtsh";
 import { persistLandingReprobe } from "@/lib/collectors/persist";
-import { probeLanding } from "@/lib/collectors/http-probe";
+import { probeLanding, type ProbePathResult } from "@/lib/collectors/http-probe";
 import { getSourceBySlug, SOURCE_SLUGS } from "@/lib/sources";
+import { inspectParking } from "@/lib/signals/anti-parking";
+import { verifySignal } from "@/lib/signals/review";
 
 const REVIEWABLE: SignalStatus[] = ["NEW", "ENRICHING", "CANDIDATE"];
 const STALE_AFTER_MS = 8 * 60 * 60 * 1000;
+const PROMOTE_SOURCES = [NRD_SOURCE, CRTSH_SOURCE] as const;
 
 export type ReprobeResult = {
   probed: number;
   wentLive: number;
+  promoted: number;
+  parked: number;
   pendingLeft: number;
   skipped: number;
   errors: string[];
+};
+
+export type ReprobeRunOptions = {
+  dryRun?: boolean;
+  force?: boolean;
+  maxPerRun?: number;
+  alreadyLive?: boolean;
 };
 
 function sleep(ms: number) {
@@ -79,22 +92,54 @@ async function markReprobeHeartbeat(result: ReprobeResult) {
         lastReprobeAt: new Date().toISOString(),
         lastReprobeProbed: result.probed,
         lastReprobeWentLive: result.wentLive,
+        lastReprobePromoted: result.promoted,
         lastReprobePendingLeft: result.pendingLeft,
       },
     },
   });
 }
 
+function promotionDecision(landing: ProbePathResult, force: boolean) {
+  if (!landing.live) {
+    return {
+      promote: false,
+      reason: `REJECTED http=${landing.status ?? "none"} live=false`,
+    };
+  }
+  if (!force) {
+    const parking = inspectParking(landing);
+    if (parking.parked) {
+      return {
+        promote: false,
+        reason: `SKIP parked/thin (motivo=${parking.reason})`,
+      };
+    }
+  }
+  const title = landing.title?.trim() ?? "";
+  return {
+    promote: true,
+    reason: `PROMOTED http=${landing.status} live=true title=${JSON.stringify(title.slice(0, 80) || "—")}`,
+  };
+}
+
 export async function runPendingNrdReprobe(
   kind: "worker" | "cron" | "inline" = "worker",
+  options: ReprobeRunOptions = {},
 ): Promise<ReprobeResult> {
-  const { maxPerRun, gapMs } = reprobeLimits(kind);
+  const limits = reprobeLimits(kind);
+  const maxPerRun = options.maxPerRun ?? limits.maxPerRun;
+  const { gapMs } = limits;
+  const dryRun = Boolean(options.dryRun);
+  const force = Boolean(options.force);
   const errors: string[] = [];
+
   const candidates = await prisma.signal.findMany({
     where: {
-      source: NRD_SOURCE,
+      source: { in: [...PROMOTE_SOURCES] },
       status: { in: REVIEWABLE },
-      rawData: { path: ["launchPending"], equals: true },
+      ...(options.alreadyLive
+        ? { rawData: { path: ["httpProbe", "landing", "live"], equals: true } }
+        : {}),
     },
     orderBy: { updatedAt: "asc" },
     take: maxPerRun,
@@ -109,30 +154,48 @@ export async function runPendingNrdReprobe(
 
   let probed = 0;
   let wentLive = 0;
+  let promoted = 0;
+  let parked = 0;
   let skipped = 0;
 
   for (const signal of candidates) {
-    if (
-      signal.source !== NRD_SOURCE ||
-      signal.status === "VERIFIED" ||
-      signal.status === "DISCARDED"
-    ) {
+    if (signal.status === "VERIFIED" || signal.status === "DISCARDED") {
       skipped += 1;
+      console.log(`[reprobe] skip ${signal.domain ?? signal.value} status=${signal.status}`);
       continue;
     }
 
     const domain = signal.domain ?? signal.value;
     try {
       const landing = await probeLanding(domain);
-      await persistLandingReprobe(signal.id, landing);
       probed += 1;
       if (landing.live) {
         wentLive += 1;
       }
-    } catch (error) {
-      errors.push(
-        `reprobe ${domain}: ${error instanceof Error ? error.message : "unknown error"}`,
+      const decision = promotionDecision(landing, force);
+      if (!decision.promote && decision.reason.startsWith("SKIP parked")) {
+        parked += 1;
+        console.log(`[http_probe] ${domain} ${decision.reason}`);
+      }
+      console.log(
+        `[reprobe] ${domain} source=${signal.source} http=${landing.status ?? "none"} live=${landing.live} title=${landing.title ?? "—"} → ${decision.reason}`,
       );
+
+      if (dryRun) {
+        continue;
+      }
+
+      await persistLandingReprobe(signal.id, landing);
+      if (decision.promote) {
+        console.log(`[http_probe] ${domain} calling verifySignal (NEW → VERIFIED)`);
+        const verified = await verifySignal(signal.id);
+        console.log(`[http_probe] ${domain} after-update status=${verified.status}`);
+        promoted += 1;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      errors.push(`reprobe ${domain}: ${message}`);
+      console.log(`[reprobe] ${domain} → REJECTED ${message}`);
     }
     await sleep(gapMs);
   }
@@ -141,10 +204,14 @@ export async function runPendingNrdReprobe(
   const result: ReprobeResult = {
     probed,
     wentLive,
+    promoted,
+    parked,
     pendingLeft,
     skipped,
     errors,
   };
-  await markReprobeHeartbeat(result);
+  if (!dryRun) {
+    await markReprobeHeartbeat(result);
+  }
   return result;
 }

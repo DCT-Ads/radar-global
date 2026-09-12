@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getReprobeHealth } from "@/lib/collectors/reprobe-nrd";
-import { ensureSources } from "@/lib/sources";
+import { ensureSources, SOURCE_SLUGS } from "@/lib/sources";
 
 export async function getCollectorsStatus() {
   await ensureSources();
@@ -20,14 +20,18 @@ export async function getCollectorsStatus() {
   ]);
 
   return {
-    sources: sources.map((source) => ({
-      slug: source.slug,
-      name: source.name,
-      status: source.status,
-      reliability: source.reliability,
-      lastRunAt: source.lastRunAt?.toISOString() ?? null,
-      lastError: source.lastError,
-    })),
+    sources: sources
+      .filter((source) =>
+        (Object.values(SOURCE_SLUGS) as string[]).includes(source.slug),
+      )
+      .map((source) => ({
+        slug: source.slug,
+        name: source.name,
+        status: source.status,
+        reliability: source.reliability,
+        lastRunAt: source.lastRunAt?.toISOString() ?? null,
+        lastError: source.lastError,
+      })),
     reprobe: {
       lastReprobeAt: reprobe.lastReprobeAt?.toISOString() ?? null,
       pendingCount: reprobe.pendingCount,

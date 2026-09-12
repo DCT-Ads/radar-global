@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { assertLocale } from "@/i18n/routing";
 import { formatRelativeTime } from "@/lib/format/relative-time";
+import { canSeeUpcomingLaunches } from "@/lib/auth/access";
 import { getCurrentUser } from "@/lib/auth/session";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -18,7 +20,7 @@ type DashboardPageProps = {
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations("dashboard");
   const user = await getCurrentUser();
   const stats = await getDashboardStats();
@@ -60,12 +62,14 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
             hint={t("kpiHotHint")}
             accent="green"
           />
-          <KpiCard
-            label={t("kpiUpcoming")}
-            value={stats.upcoming}
-            hint={t("kpiUpcomingHint")}
-            accent="blue"
-          />
+          {canSeeUpcomingLaunches(user) ? (
+            <KpiCard
+              label={t("kpiUpcoming")}
+              value={stats.upcoming}
+              hint={t("kpiUpcomingHint")}
+              accent="blue"
+            />
+          ) : null}
           <KpiCard
             label={t("kpiVerified")}
             value={stats.verified}

@@ -172,7 +172,8 @@ export async function fetchDigistore24Hits(input: {
   maxHits: number;
   fetchFn?: Digistore24FetchFn;
 }): Promise<{ hits: Digistore24Hit[] }> {
-  const apiKey = process.env.DIGISTORE24_API_KEY?.trim();
+  const { getDigistore24ApiKey } = await import("@/lib/integrations/digistore24-config");
+  const apiKey = await getDigistore24ApiKey();
   if (!apiKey) {
     throw new Error("DIGISTORE24_API_KEY is missing");
   }

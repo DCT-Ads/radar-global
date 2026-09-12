@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
 
 type LoginPageProps = {
   params: Promise<{ locale: string }>;
@@ -10,7 +11,7 @@ type LoginPageProps = {
 
 export default async function LoginPage({ params }: LoginPageProps) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations();
 
   return (

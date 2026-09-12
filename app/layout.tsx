@@ -16,8 +16,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Radar Global",
-  description: "Discover the next big launch before the market does.",
+  title: "DCT Namalu",
+  description: "Radar de lançamentos globais",
+  manifest: "/manifest.json",
+  applicationName: "DCT Namalu",
+  appleWebApp: {
+    capable: true,
+    title: "Namalu",
+    statusBarStyle: "black-translucent",
+  },
+  icons: [
+    { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    { url: "/icon-192.png", rel: "apple-touch-icon", sizes: "192x192" },
+  ],
+};
+
+export const viewport = {
+  themeColor: "#000000",
 };
 
 export default async function RootLayout({

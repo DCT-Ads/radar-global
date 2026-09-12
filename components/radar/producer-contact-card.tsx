@@ -4,6 +4,7 @@ import {
   hasProducerContact,
   instagramHref,
   linkedinHref,
+  telegramHref,
   xHref,
   youtubeHref,
   type ProducerContact,
@@ -11,10 +12,13 @@ import {
 
 type ProducerContactCardProps = {
   contact: ProducerContact;
+  commission?: string | null;
   labels: {
     title: string;
     empty: string;
     ease: string;
+    commission: string;
+    notInformed: string;
     linkedin: string;
     youtube: string;
     facebook: string;
@@ -23,7 +27,17 @@ type ProducerContactCardProps = {
   };
 };
 
-export function ProducerContactCard({ contact, labels }: ProducerContactCardProps) {
+const LINK_REL = "noopener noreferrer";
+
+export function ProducerContactCard({
+  contact,
+  commission,
+  labels,
+}: ProducerContactCardProps) {
+  const easeValue =
+    contact.contactScore > 0 ? `${contact.contactScore}/100` : labels.notInformed;
+  const commissionValue = commission?.trim() ? commission : labels.notInformed;
+
   return (
     <Card className="border-[#1E3A5F] bg-[#12263F]/80 text-[#F5F7FA]">
       <CardHeader>
@@ -43,11 +57,21 @@ export function ProducerContactCard({ contact, labels }: ProducerContactCardProp
             ✉️ {contact.email}
           </a>
         ) : null}
+        {contact.telegram ? (
+          <a
+            href={telegramHref(contact.telegram)}
+            target="_blank"
+            rel={LINK_REL}
+            className="block text-[#00C2CB] hover:underline"
+          >
+            📧 @{contact.telegram}
+          </a>
+        ) : null}
         {contact.instagram ? (
           <a
             href={instagramHref(contact.instagram)}
             target="_blank"
-            rel="noreferrer"
+            rel={LINK_REL}
             className="block text-[#00C2CB] hover:underline"
           >
             📷 @{contact.instagram}
@@ -57,7 +81,7 @@ export function ProducerContactCard({ contact, labels }: ProducerContactCardProp
           <a
             href={youtubeHref(contact.youtube)}
             target="_blank"
-            rel="noreferrer"
+            rel={LINK_REL}
             className="block text-[#00C2CB] hover:underline"
           >
             ▶️ {labels.youtube}
@@ -67,7 +91,7 @@ export function ProducerContactCard({ contact, labels }: ProducerContactCardProp
           <a
             href={facebookHref(contact.facebook)}
             target="_blank"
-            rel="noreferrer"
+            rel={LINK_REL}
             className="block text-[#00C2CB] hover:underline"
           >
             👤 {labels.facebook}
@@ -77,7 +101,7 @@ export function ProducerContactCard({ contact, labels }: ProducerContactCardProp
           <a
             href={linkedinHref(contact.linkedin)}
             target="_blank"
-            rel="noreferrer"
+            rel={LINK_REL}
             className="block text-[#00C2CB] hover:underline"
           >
             💼 {labels.linkedin}
@@ -87,7 +111,7 @@ export function ProducerContactCard({ contact, labels }: ProducerContactCardProp
           <a
             href={xHref(contact.x)}
             target="_blank"
-            rel="noreferrer"
+            rel={LINK_REL}
             className="block text-[#00C2CB] hover:underline"
           >
             𝕏 @{contact.x}
@@ -97,8 +121,11 @@ export function ProducerContactCard({ contact, labels }: ProducerContactCardProp
           <p className="text-[#8BA3B8]">{labels.empty}</p>
         ) : null}
         <p className="pt-2 text-xs text-[#8BA3B8]">
-          {labels.ease}:{" "}
-          <span className="text-[#D4AF37]">{contact.contactScore}/100</span>
+          {labels.ease}: <span className="text-[#D4AF37]">{easeValue}</span>
+        </p>
+        <p className="text-xs text-[#8BA3B8]">
+          {labels.commission}:{" "}
+          <span className="text-[#D4AF37]">{commissionValue}</span>
         </p>
       </CardContent>
     </Card>

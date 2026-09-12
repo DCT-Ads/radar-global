@@ -5,13 +5,18 @@ import { SignalEnrichmentStepper } from "@/components/admin/signal-enrichment-st
 import { SignalReviewActions } from "@/components/admin/signal-review-actions";
 import { SaturationLegend } from "@/components/admin/saturation-legend";
 import { SignalStatusBadge } from "@/components/admin/signal-status-badge";
+import { ProducerContactCard } from "@/components/radar/producer-contact-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
+import { contactFromRecords, formatAffiliateCommission } from "@/lib/radar/detail";
+import { enrichProducerById, isProducerEnrichmentDue } from "@/lib/producers/enrich";
 import {
   getSaturationLevel,
   isUpcomingLaunch,
   landingLiveFromRaw,
+  launchAtFromRaw,
   registeredAtFromRaw,
   saturationInputsForSignal,
 } from "@/lib/signals/saturation";
@@ -22,9 +27,9 @@ type SignalDetailPageProps = {
   params: Promise<{ locale: string; id: string }>;
 };
 
-function asRecord(value: Prisma.JsonValue | null): Record<string, Prisma.JsonValue> {
+function asRecord(value: Prisma.JsonValue | null): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value;
+    return value as Record<string, unknown>;
   }
   return {};
 }
@@ -46,15 +51,23 @@ function Field({
 
 export default async function SignalDetailPage({ params }: SignalDetailPageProps) {
   const { locale, id } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations("admin");
+  const radar = await getTranslations("radar");
   const format = await getFormatter();
 
   const signal = await prisma.signal.findUnique({
     where: { id },
     include: {
-      producer: { include: { country: true } },
-      launch: { include: { country: true, producer: true } },
+      producer: { include: { country: true, evidences: true } },
+      launch: {
+        include: {
+          country: true,
+          producer: { include: { evidences: true } },
+          commissions: { orderBy: { capturedAt: "desc" }, take: 1 },
+          evidences: true,
+        },
+      },
       evidences: {
         include: { source: true },
         orderBy: { capturedAt: "desc" },
@@ -66,6 +79,15 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
     notFound();
   }
 
+  const producerId = signal.producerId ?? signal.launch?.producerId;
+  const producerRecord = signal.producer ?? signal.launch?.producer ?? null;
+  if (producerId && isProducerEnrichmentDue(producerRecord?.enrichedAt)) {
+    const enriched = await enrichProducerById(producerId);
+    if (enriched && producerRecord) {
+      Object.assign(producerRecord, enriched);
+    }
+  }
+
   const saturationInputs = await saturationInputsForSignal(signal);
   const domain = signal.domain ?? signal.value;
   const raw = asRecord(signal.rawData);
@@ -73,16 +95,33 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
     typeof raw.issuedAt === "string" && !Number.isNaN(Date.parse(raw.issuedAt))
       ? new Date(raw.issuedAt)
       : null;
-  const registeredAt = registeredAtFromRaw(signal.rawData);
+  const registeredAt =
+    registeredAtFromRaw(signal.rawData) ?? signal.discoveredAt;
   const upcoming = isUpcomingLaunch({
     source: signal.source,
     landingLive: landingLiveFromRaw(signal.rawData),
   });
+  const launchAt = upcoming
+    ? null
+    : (launchAtFromRaw(signal.rawData) ?? signal.discoveredAt);
   const awaiting = t("awaitingEnrichment");
   const formatDate = (date: Date | null | undefined) =>
     date
       ? format.dateTime(date, { dateStyle: "medium", timeStyle: "short" })
       : "—";
+  const contact = contactFromRecords({
+    ...(producerRecord ?? {}),
+    name: producerRecord?.name ?? domain,
+    domain,
+    website: producerRecord?.website ?? (domain ? `https://${domain}` : null),
+    evidences: [
+      ...signal.evidences,
+      ...(producerRecord?.evidences ?? []),
+      ...(signal.launch?.evidences ?? []),
+    ],
+    extras: [{ url: signal.url, raw: signal.rawData }],
+  });
+  const commission = formatAffiliateCommission(signal.launch?.commissions[0]);
 
   return (
     <div className="space-y-6">
@@ -161,7 +200,7 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
           <Field label={t("colRegistered")} value={formatDate(registeredAt)} />
           <Field
             label={t("colLaunchAt")}
-            value={upcoming ? t("launchPending") : formatDate(signal.launch?.firstSeenAt)}
+            value={upcoming ? t("launchPending") : formatDate(launchAt)}
           />
           <Field label={t("certIssuedAt")} value={formatDate(issuedAt)} />
         </CardContent>
@@ -177,7 +216,7 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
             {formatDate(signal.discoveredAt)}
           </p>
           <p>
-            <span className="text-muted-foreground">{t("createdAt")}: </span>
+            <span className="text-muted-foreground">{t("createdInSystem")}: </span>
             {formatDate(signal.createdAt)}
           </p>
           <p>
@@ -244,12 +283,31 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
           )}
           <Field label={t("launchStatus")} value={signal.launch?.status} />
           <Field label={t("whoisRegistrar")} value={awaiting} />
-          <Field label={t("whoisCreated")} value={awaiting} />
+          <Field
+            label={t("whoisCreated")}
+            value={formatDate(registeredAt)}
+          />
           <Field label={t("whoisExpires")} value={awaiting} />
           <Field label={t("technologies")} value={awaiting} />
-          <Field label={t("socialLinks")} value={awaiting} />
         </CardContent>
       </Card>
+
+      <ProducerContactCard
+        contact={contact}
+        commission={commission}
+        labels={{
+          title: radar("contactTitle"),
+          empty: t("awaitingEnrichment"),
+          ease: radar("contactEase"),
+          commission: radar("contactCommission"),
+          notInformed: radar("contactNotInformed"),
+          linkedin: radar("contactLinkedin"),
+          youtube: radar("contactYoutube"),
+          facebook: radar("contactFacebook"),
+          x: radar("contactX"),
+          company: radar("contactCompany"),
+        }}
+      />
 
       <Card>
         <CardHeader>

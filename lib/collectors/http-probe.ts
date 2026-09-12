@@ -1,12 +1,17 @@
+import { usefulBodyText } from "@/lib/signals/anti-parking";
+
 export type ProbePathResult = {
   path: string;
   url: string;
   live: boolean;
   status: number | null;
   title: string | null;
+  body: string | null;
+  bodySnippet: string | null;
   contentLanguage: string | null;
   htmlLang: string | null;
   ogLocale: string | null;
+  probedAt: string;
 };
 
 export type HttpProbeResult = {
@@ -17,6 +22,11 @@ export type HttpProbeResult = {
 };
 
 const PROBE_TIMEOUT_MS = 8_000;
+const BODY_SNIPPET_BYTES = 3_000;
+
+function stripNullBytes(value: string | null): string | null {
+  return value ? value.replaceAll("\u0000", "") : value;
+}
 const TITLE_RE = /<title[^>]*>([^<]+)<\/title>/i;
 const HTML_LANG_RE = /<html[^>]*\slang=["']([^"']+)["']/i;
 const OG_LOCALE_RE =
@@ -114,15 +124,19 @@ async function probeUrl(url: string): Promise<Omit<ProbePathResult, "path">> {
 
     const live = response.status >= 200 && response.status < 400;
     let title: string | null = null;
+    let body: string | null = null;
+    let bodySnippet: string | null = null;
     let htmlLang: string | null = null;
     let ogLocale: string | null = null;
     if (live) {
       const html = (await response.text()).slice(0, 8_000);
+      bodySnippet = stripNullBytes(html.slice(0, BODY_SNIPPET_BYTES) || null);
+      body = stripNullBytes(usefulBodyText(html).slice(0, 2_000) || null);
       const match = TITLE_RE.exec(html);
-      title = match?.[1]?.trim().replace(/\s+/g, " ").slice(0, 160) ?? null;
-      htmlLang = HTML_LANG_RE.exec(html)?.[1]?.trim() ?? null;
+      title = stripNullBytes(match?.[1]?.trim().replace(/\s+/g, " ").slice(0, 160) ?? null);
+      htmlLang = stripNullBytes(HTML_LANG_RE.exec(html)?.[1]?.trim() ?? null);
       const og = OG_LOCALE_RE.exec(html);
-      ogLocale = og?.[1]?.trim() || og?.[2]?.trim() || null;
+      ogLocale = stripNullBytes(og?.[1]?.trim() || og?.[2]?.trim() || null);
     }
 
     return {
@@ -130,9 +144,12 @@ async function probeUrl(url: string): Promise<Omit<ProbePathResult, "path">> {
       live,
       status: response.status,
       title,
+      body,
+      bodySnippet,
       contentLanguage: response.headers.get("content-language"),
       htmlLang,
       ogLocale,
+      probedAt: new Date().toISOString(),
     };
   } catch {
     return {
@@ -140,9 +157,12 @@ async function probeUrl(url: string): Promise<Omit<ProbePathResult, "path">> {
       live: false,
       status: null,
       title: null,
+      body: null,
+      bodySnippet: null,
       contentLanguage: null,
       htmlLang: null,
       ogLocale: null,
+      probedAt: new Date().toISOString(),
     };
   } finally {
     clearTimeout(timeout);

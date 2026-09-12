@@ -1,7 +1,7 @@
 import { hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { routing } from "@/i18n/routing";
+import { assertLocale, routing } from "@/i18n/routing";
 
 type LocaleLayoutProps = {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
 
   return children;
 }

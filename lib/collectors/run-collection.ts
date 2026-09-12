@@ -107,7 +107,12 @@ export async function runYoutubeCollection(
 ) {
   await ensureSources();
   const source = await getSourceBySlug(SOURCE_SLUGS.youtube);
-  if (source.status === "PAUSED" || source.status === "DISABLED") {
+  if (source.status === "PAUSED") {
+    return 0;
+  }
+
+  if (!process.env.YOUTUBE_API_KEY?.trim()) {
+    await markSource(SOURCE_SLUGS.youtube, "DISABLED", null);
     return 0;
   }
 
@@ -134,6 +139,9 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
   const httpProbe = await getSourceBySlug(SOURCE_SLUGS.httpProbe);
 
   const config = parseCrtshConfig(crtsh.config);
+  if (crtsh.lastError?.includes("YOUTUBE_API_KEY")) {
+    await markSource(SOURCE_SLUGS.crtsh, "ACTIVE", null);
+  }
   const keywordOverride = process.env.COLLECT_KEYWORDS?.split(",")
     .map((item) => item.trim())
     .filter(Boolean);
@@ -213,7 +221,14 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
       }
     }
 
-    await markSource(SOURCE_SLUGS.crtsh, errors.length && !discovered.length ? "ERROR" : "ACTIVE", errors[0] ?? null);
+    const crtshErrors = errors.filter(
+      (item) => item.startsWith("crt.sh") || item.startsWith("probe "),
+    );
+    await markSource(
+      SOURCE_SLUGS.crtsh,
+      crtshErrors.length && !discovered.length ? "ERROR" : "ACTIVE",
+      crtshErrors[0] ?? null,
+    );
     await markSource(
       SOURCE_SLUGS.httpProbe,
       errors.some((item) => item.startsWith("probe ")) && probed === 0 ? "ERROR" : "ACTIVE",

@@ -32,6 +32,7 @@ function main() {
     facebook: null,
     linkedin: null,
     x: null,
+    telegram: null,
     companyName: null,
     contactScore: 0,
   });
@@ -54,7 +55,13 @@ function main() {
   assert.equal(found.youtube, "@novaoferta");
   assert.equal(found.facebook, "novaoferta");
   assert.equal(found.x, "novaoferta");
+  assert.equal(found.telegram, null);
   assert.equal(found.companyName, "Nova Oferta Ltda");
+
+  const telegram = extractProducerContact([
+    { url: "https://t.me/winvestai", telegram: "@winvestai" },
+  ]);
+  assert.equal(telegram.telegram, "winvestai");
   assert.equal(found.contactScore, 100);
 
   const youtubeChannel = extractProducerContact([
@@ -82,6 +89,7 @@ function main() {
       facebook: null,
       linkedin: null,
       x: null,
+      telegram: null,
       companyName: null,
     }),
     CONTACT_SCORE_WEIGHTS.email,

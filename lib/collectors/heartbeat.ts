@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function markSource(
   slug: string,
-  status: "ACTIVE" | "ERROR",
+  status: "ACTIVE" | "ERROR" | "DISABLED",
   lastError: string | null,
 ) {
   await prisma.source.update({

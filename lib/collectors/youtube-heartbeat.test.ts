@@ -114,10 +114,10 @@ async function main() {
   assert.equal(fetchFnCalled, false, "missing key must not call fetchFn/API");
   assert.equal(missingPersisted, 0);
   assert.equal(afterMissingCount, beforeMissing, "missing key must not invent signals");
-  assert.ok(afterMissing?.lastRunAt, "heartbeat still sets lastRunAt on ERROR");
-  assert.equal(afterMissing.lastError, "YOUTUBE_API_KEY is missing");
-  assert.equal(afterMissing.status, "ERROR");
-  assert.ok(missingErrors[0]?.includes("YOUTUBE_API_KEY is missing"));
+  assert.ok(afterMissing?.lastRunAt, "heartbeat still sets lastRunAt when skipped");
+  assert.equal(afterMissing.lastError, null);
+  assert.equal(afterMissing.status, "DISABLED");
+  assert.equal(missingErrors.length, 0);
 
   console.log("youtube missing key: ok");
 

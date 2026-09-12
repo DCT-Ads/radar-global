@@ -4,7 +4,11 @@ import { ProducerContactCard } from "@/components/radar/producer-contact-card";
 import { RadarShell } from "@/components/radar/radar-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
+import { canSeeUpcomingLaunches } from "@/lib/auth/access";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getRadarProducer } from "@/lib/radar/detail";
+import { isUpcomingLaunch, landingLiveFromRaw } from "@/lib/signals/saturation";
 
 type ProducerPageProps = {
   params: Promise<{ locale: string; id: string }>;
@@ -12,17 +16,29 @@ type ProducerPageProps = {
 
 export default async function ProducerPage({ params }: ProducerPageProps) {
   const { locale, id } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations("radar");
   const common = await getTranslations("common");
   const format = await getFormatter();
   const producer = await getRadarProducer(id);
+  const user = await getCurrentUser();
 
   if (!producer) {
     notFound();
   }
 
   const empty = common("insufficientData");
+  const launches = canSeeUpcomingLaunches(user)
+    ? producer.launches
+    : producer.launches.filter(
+        (launch) =>
+          !launch.signals.some((signal) =>
+            isUpcomingLaunch({
+              source: signal.source,
+              landingLive: landingLiveFromRaw(signal.rawData),
+            }),
+          ),
+      );
   const formatDate = (date: Date | null | undefined) =>
     date ? format.dateTime(date, { dateStyle: "medium", timeStyle: "short" }) : empty;
 
@@ -55,6 +71,8 @@ export default async function ProducerPage({ params }: ProducerPageProps) {
             title: t("contactTitle"),
             empty,
             ease: t("contactEase"),
+            commission: t("contactCommission"),
+            notInformed: t("contactNotInformed"),
             linkedin: t("contactLinkedin"),
             youtube: t("contactYoutube"),
             facebook: t("contactFacebook"),
@@ -68,11 +86,11 @@ export default async function ProducerPage({ params }: ProducerPageProps) {
             <CardTitle className="text-base text-[#D4AF37]">{t("launches")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {producer.launches.length === 0 ? (
+            {launches.length === 0 ? (
               <p className="text-sm text-[#8BA3B8]">{empty}</p>
             ) : (
               <ul className="space-y-3">
-                {producer.launches.map((launch) => (
+                {launches.map((launch) => (
                   <li key={launch.id}>
                     <Link
                       href={`/launches/${launch.id}`}

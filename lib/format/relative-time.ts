@@ -28,7 +28,11 @@ export function formatRelativeTime(
 
   const deltaSeconds = (date.getTime() - now.getTime()) / 1000;
   const abs = Math.abs(deltaSeconds);
-  const bucket = UNITS.find((item) => abs >= item.seconds) ?? UNITS[UNITS.length - 1];
+  const hourBucket = UNITS.find((item) => item.unit === "hour");
+  const bucket =
+    abs < 72 * 3600 && abs >= 3600 && hourBucket
+      ? hourBucket
+      : (UNITS.find((item) => abs >= item.seconds) ?? UNITS[UNITS.length - 1]);
   const amount = Math.round(deltaSeconds / bucket.seconds);
 
   if (amount === 0) {

@@ -5,6 +5,7 @@ export type ProducerContact = {
   facebook: string | null;
   linkedin: string | null;
   x: string | null;
+  telegram: string | null;
   companyName: string | null;
   contactScore: number;
 };
@@ -20,6 +21,7 @@ export type ContactSource = {
   facebook?: string | null;
   linkedin?: string | null;
   x?: string | null;
+  telegram?: string | null;
   companyName?: string | null;
   name?: string | null;
   domain?: string | null;
@@ -47,6 +49,8 @@ const FACEBOOK_RE =
   /(?:https?:\/\/)?(?:www\.)?(?:facebook\.com|fb\.com)\/([A-Za-z0-9.]+)\/?/i;
 const X_RE =
   /(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/([A-Za-z0-9_]{1,15})/i;
+const TELEGRAM_RE =
+  /(?:https?:\/\/)?(?:t\.me|telegram\.me|telegram\.dog)\/([A-Za-z0-9_]{5,32})/i;
 
 const JUNK_EMAIL = [
   "whoisguard",
@@ -95,6 +99,16 @@ const X_RESERVED = new Set([
   "messages",
   "hashtag",
   "login",
+]);
+const TELEGRAM_RESERVED = new Set([
+  "join",
+  "addstickers",
+  "share",
+  "proxy",
+  "socks",
+  "iv",
+  "login",
+  "s",
 ]);
 
 function collectStrings(value: unknown, into: string[]) {
@@ -217,6 +231,21 @@ export function normalizeX(value: string | null | undefined) {
   return handle;
 }
 
+export function normalizeTelegram(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+  const fromUrl = value.match(TELEGRAM_RE)?.[1];
+  const handle = (fromUrl ?? value.replace(/^@/, "")).trim();
+  if (!/^[A-Za-z0-9_]{5,32}$/.test(handle)) {
+    return null;
+  }
+  if (TELEGRAM_RESERVED.has(handle.toLowerCase())) {
+    return null;
+  }
+  return handle;
+}
+
 function firstMatch<T>(texts: string[], normalize: (value: string) => T | null) {
   for (const text of texts) {
     const value = normalize(text);
@@ -273,7 +302,14 @@ function companyNameFromSources(sources: ContactSource[]) {
 export function contactScoreOf(
   contact: Pick<
     ProducerContact,
-    "email" | "instagram" | "youtube" | "facebook" | "linkedin" | "x" | "companyName"
+    | "email"
+    | "instagram"
+    | "youtube"
+    | "facebook"
+    | "linkedin"
+    | "x"
+    | "telegram"
+    | "companyName"
   >,
 ) {
   return (
@@ -281,7 +317,9 @@ export function contactScoreOf(
     (contact.instagram ? CONTACT_SCORE_WEIGHTS.instagram : 0) +
     (contact.youtube ? CONTACT_SCORE_WEIGHTS.youtube : 0) +
     (contact.linkedin ? CONTACT_SCORE_WEIGHTS.linkedin : 0) +
-    (contact.facebook || contact.x ? CONTACT_SCORE_WEIGHTS.social : 0)
+    (contact.facebook || contact.x || contact.telegram
+      ? CONTACT_SCORE_WEIGHTS.social
+      : 0)
   );
 }
 
@@ -296,6 +334,8 @@ export function extractProducerContact(sources: ContactSource[]): ProducerContac
   const storedLinkedin =
     sources.map((source) => normalizeLinkedin(source.linkedin)).find(Boolean) ?? null;
   const storedX = sources.map((source) => normalizeX(source.x)).find(Boolean) ?? null;
+  const storedTelegram =
+    sources.map((source) => normalizeTelegram(source.telegram)).find(Boolean) ?? null;
 
   const texts: string[] = [];
   for (const source of sources) {
@@ -312,9 +352,19 @@ export function extractProducerContact(sources: ContactSource[]): ProducerContac
   const facebook = storedFacebook ?? firstMatch(texts, normalizeFacebook);
   const linkedin = storedLinkedin ?? firstMatch(texts, normalizeLinkedin);
   const x = storedX ?? firstMatch(texts, normalizeX);
+  const telegram = storedTelegram ?? firstMatch(texts, normalizeTelegram);
   const companyName = companyNameFromSources(sources);
 
-  const contact = { email, instagram, youtube, facebook, linkedin, x, companyName };
+  const contact = {
+    email,
+    instagram,
+    youtube,
+    facebook,
+    linkedin,
+    x,
+    telegram,
+    companyName,
+  };
   return { ...contact, contactScore: contactScoreOf(contact) };
 }
 
@@ -355,6 +405,10 @@ export function xHref(handle: string) {
   return `https://x.com/${handle}`;
 }
 
+export function telegramHref(handle: string) {
+  return `https://t.me/${handle}`;
+}
+
 export function hasProducerContact(contact: ProducerContact) {
   return Boolean(
     contact.email ||
@@ -363,6 +417,7 @@ export function hasProducerContact(contact: ProducerContact) {
       contact.facebook ||
       contact.linkedin ||
       contact.x ||
+      contact.telegram ||
       contact.companyName,
   );
 }

@@ -1,5 +1,6 @@
 import { ageInDays } from "@/lib/collectors/domains";
 import { prisma } from "@/lib/prisma";
+import { firstSeenAtFromLaunch, uniqueEvidenceCount } from "@/lib/radar/first-seen";
 import { computeEarlySignal, goldenWindowRank } from "@/lib/scoring/early-signal";
 import {
   getSaturationLevel,
@@ -26,7 +27,9 @@ export type RadarLaunchRow = {
   goldenWindow: number;
 };
 
-export async function listVerifiedRadarLaunches(): Promise<RadarLaunchRow[]> {
+export async function listVerifiedRadarLaunches(options?: {
+  includeUpcoming?: boolean;
+}): Promise<RadarLaunchRow[]> {
   const [launches, keywordCounts] = await Promise.all([
     prisma.launch.findMany({
       where: {
@@ -42,6 +45,7 @@ export async function listVerifiedRadarLaunches(): Promise<RadarLaunchRow[]> {
         signals: {
           where: { status: "VERIFIED" },
           orderBy: { discoveredAt: "desc" },
+          include: { evidences: { select: { id: true } } },
         },
       },
     }),
@@ -54,8 +58,16 @@ export async function listVerifiedRadarLaunches(): Promise<RadarLaunchRow[]> {
   const { byKeyword, median, p75 } = indexKeywordVolumes(keywordCounts);
 
   const rows = launches.map((launch) => {
-    const scored = computeEarlySignal({
+    const firstSeenAt = firstSeenAtFromLaunch({
       firstSeenAt: launch.firstSeenAt,
+      signals: launch.signals,
+    });
+    const evidenceCount = uniqueEvidenceCount(
+      launch.evidences,
+      launch.signals.flatMap((signal) => signal.evidences),
+    );
+    const scored = computeEarlySignal({
+      firstSeenAt,
       evidences: launch.evidences.map((evidence) => ({
         capturedAt: evidence.capturedAt,
         url: evidence.url,
@@ -76,7 +88,7 @@ export async function listVerifiedRadarLaunches(): Promise<RadarLaunchRow[]> {
       medianVolume: median,
       p75Volume: p75,
       confidence: latestSignal?.confidence ?? 0,
-      firstSeenDaysAgo: ageInDays(launch.firstSeenAt),
+      firstSeenDaysAgo: ageInDays(firstSeenAt),
     });
     const upcoming = launch.signals.some((signal) =>
       isUpcomingLaunch({
@@ -84,14 +96,14 @@ export async function listVerifiedRadarLaunches(): Promise<RadarLaunchRow[]> {
         landingLive: landingLiveFromRaw(signal.rawData),
       }),
     );
-    const daysAgo = ageInDays(launch.firstSeenAt);
+    const daysAgo = ageInDays(firstSeenAt);
 
     return {
       id: launch.id,
       title: launch.title,
       domain: launch.domain,
       niche: launch.niche,
-      firstSeenAt: launch.firstSeenAt,
+      firstSeenAt,
       producer: launch.producer,
       earlySignal: scored.earlySignal,
       dataQuality: scored.dataQuality,
@@ -99,10 +111,13 @@ export async function listVerifiedRadarLaunches(): Promise<RadarLaunchRow[]> {
       saturation,
       upcoming,
       keyword,
-      evidenceCount: launch.evidences.length,
+      evidenceCount,
       goldenWindow: goldenWindowRank(scored.earlySignal, saturation, daysAgo),
     };
   });
 
-  return rows.sort((a, b) => b.goldenWindow - a.goldenWindow);
+  const visible = options?.includeUpcoming
+    ? rows
+    : rows.filter((row) => !row.upcoming);
+  return visible.sort((a, b) => b.goldenWindow - a.goldenWindow);
 }

@@ -5,8 +5,12 @@ import { ProducerContactCard } from "@/components/radar/producer-contact-card";
 import { RadarShell } from "@/components/radar/radar-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
+import { canSeeUpcomingLaunches } from "@/lib/auth/access";
+import { getCurrentUser } from "@/lib/auth/session";
 import { persistLaunchScore } from "@/lib/scoring/persist";
-import { getRadarLaunch } from "@/lib/radar/detail";
+import { formatAffiliateCommission, getRadarLaunch } from "@/lib/radar/detail";
+import { redirect } from "@/i18n/navigation";
 
 type LaunchPageProps = {
   params: Promise<{ locale: string; id: string }>;
@@ -14,7 +18,7 @@ type LaunchPageProps = {
 
 export default async function LaunchPage({ params }: LaunchPageProps) {
   const { locale, id } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations("radar");
   const common = await getTranslations("common");
   const format = await getFormatter();
@@ -22,6 +26,11 @@ export default async function LaunchPage({ params }: LaunchPageProps) {
 
   if (!detail) {
     notFound();
+  }
+
+  const user = await getCurrentUser();
+  if (detail.upcoming && !canSeeUpcomingLaunches(user)) {
+    redirect({ href: "/upgrade", locale });
   }
 
   await persistLaunchScore(detail.launch.id);
@@ -94,10 +103,13 @@ export default async function LaunchPage({ params }: LaunchPageProps) {
 
         <ProducerContactCard
           contact={contact}
+          commission={formatAffiliateCommission(launch.commissions[0])}
           labels={{
             title: t("contactTitle"),
             empty,
             ease: t("contactEase"),
+            commission: t("contactCommission"),
+            notInformed: t("contactNotInformed"),
             linkedin: t("contactLinkedin"),
             youtube: t("contactYoutube"),
             facebook: t("contactFacebook"),

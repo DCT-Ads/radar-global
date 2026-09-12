@@ -2,6 +2,7 @@ import type { SignalStatus, SourceStatus } from "@prisma/client";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminTabs } from "@/components/admin/admin-tabs";
 import { RunCollectionButton } from "@/components/admin/run-collection-button";
 import {
   SATURATION_FILTERS,
@@ -11,6 +12,7 @@ import {
 import { SignalReviewActions } from "@/components/admin/signal-review-actions";
 import { SignalTableSaturation } from "@/components/admin/signal-table-saturation";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
 import {
   getSaturationLevel,
@@ -23,7 +25,7 @@ import { NRD_SOURCE } from "@/lib/collectors/nrd";
 import { ageInDays } from "@/lib/collectors/domains";
 import { getReprobeHealth } from "@/lib/collectors/reprobe-nrd";
 import { formatRelativeTime } from "@/lib/format/relative-time";
-import { ensureSources } from "@/lib/sources";
+import { ensureSources, SOURCE_SLUGS } from "@/lib/sources";
 import { cn } from "@/lib/utils";
 
 const SIGNAL_STATUSES: SignalStatus[] = [
@@ -62,7 +64,7 @@ function isSatFilter(value: string | undefined): value is SaturationFilter {
 export default async function AdminPage({ params, searchParams }: AdminPageProps) {
   const { locale } = await params;
   const query = await searchParams;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations("admin");
   await ensureSources();
 
@@ -130,30 +132,10 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <div className="flex gap-2 border-b border-border">
-        <Link
-          href={`/admin?tab=review&status=${status}`}
-          className={cn(
-            "border-b-2 px-3 py-2 text-sm",
-            tab === "review"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground",
-          )}
-        >
-          {t("tabReview")}
-        </Link>
-        <Link
-          href="/admin?tab=collectors"
-          className={cn(
-            "border-b-2 px-3 py-2 text-sm",
-            tab === "collectors"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground",
-          )}
-        >
-          {t("tabCollectors")}
-        </Link>
-      </div>
+      <AdminTabs
+        active={tab}
+        reviewHref={`/admin?tab=review&status=${status}`}
+      />
 
       {reprobeHealth.stale ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -300,7 +282,11 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                   </tr>
                 </thead>
                 <tbody>
-                  {sources.map((source) => (
+                  {sources
+                    .filter((source) =>
+                      (Object.values(SOURCE_SLUGS) as string[]).includes(source.slug),
+                    )
+                    .map((source) => (
                     <tr key={source.id} className="border-b border-border/70">
                       <td className="py-3 pr-4">
                         <p className="font-medium">{source.name}</p>

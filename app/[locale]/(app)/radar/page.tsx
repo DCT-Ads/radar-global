@@ -1,8 +1,11 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { SignalTableSaturation } from "@/components/admin/signal-table-saturation";
 import { RadarShell } from "@/components/radar/radar-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import { assertLocale } from "@/i18n/routing";
+import { canSeeUpcomingLaunches } from "@/lib/auth/access";
+import { getCurrentUser } from "@/lib/auth/session";
 import { formatRelativeTime } from "@/lib/format/relative-time";
 import { listVerifiedRadarLaunches } from "@/lib/radar/list";
 
@@ -12,11 +15,17 @@ type RadarPageProps = {
 
 export default async function RadarPage({ params }: RadarPageProps) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  setRequestLocale(assertLocale(locale));
   const t = await getTranslations("radar");
   const common = await getTranslations("common");
-  const rows = await listVerifiedRadarLaunches();
+  const format = await getFormatter();
+  const user = await getCurrentUser();
+  const rows = await listVerifiedRadarLaunches({
+    includeUpcoming: canSeeUpcomingLaunches(user),
+  });
   const empty = common("insufficientData");
+  const formatAbsolute = (date: Date) =>
+    format.dateTime(date, { dateStyle: "medium", timeStyle: "short" });
 
   return (
     <RadarShell>
@@ -83,6 +92,7 @@ export default async function RadarPage({ params }: RadarPageProps) {
                       <p className="text-sm text-[#F5F7FA]">
                         {formatRelativeTime(row.firstSeenAt, locale) || empty}
                       </p>
+                      <p className="text-xs text-[#8BA3B8]">{formatAbsolute(row.firstSeenAt)}</p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wide text-[#8BA3B8]">

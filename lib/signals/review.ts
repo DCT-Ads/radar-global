@@ -1,10 +1,12 @@
 import type { Signal, SignalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { enrichProducerById } from "@/lib/producers/enrich";
+import { firstSeenAtFromLaunch, firstSeenAtFromSignal } from "@/lib/radar/first-seen";
 import { persistLaunchScore } from "@/lib/scoring/persist";
 import { ensureSources, getSourceBySlug, SOURCE_SLUGS } from "@/lib/sources";
 import { evidenceCreateData, evidenceTypeFromSignal } from "@/lib/signals/evidence";
 import { launchIdentityFromSignal } from "@/lib/signals/launch-identity";
+import { syncProbeEvidences } from "@/lib/signals/probe-evidence";
 
 export { launchIdentityFromSignal };
 
@@ -53,12 +55,24 @@ export async function verifySignal(signalId: string): Promise<Signal> {
       },
     });
 
+    const existingLaunch = await tx.launch.findUnique({
+      where: { domain: identity.launchDomain },
+      select: { firstSeenAt: true },
+    });
+    const firstSeenAt = existingLaunch
+      ? firstSeenAtFromLaunch({
+          firstSeenAt: existingLaunch.firstSeenAt,
+          signals: [signal],
+        })
+      : firstSeenAtFromSignal(signal);
+
     const launch = await tx.launch.upsert({
       where: { domain: identity.launchDomain },
       update: {
         lastSeenAt: new Date(),
         niche: signal.niche,
         title: identity.launchTitle,
+        firstSeenAt,
       },
       create: {
         producerId: producer.id,
@@ -66,7 +80,7 @@ export async function verifySignal(signalId: string): Promise<Signal> {
         slug: identity.launchSlug,
         domain: identity.launchDomain,
         niche: signal.niche,
-        firstSeenAt: signal.discoveredAt,
+        firstSeenAt,
         lastSeenAt: new Date(),
       },
     });
@@ -93,6 +107,18 @@ export async function verifySignal(signalId: string): Promise<Signal> {
         },
       }),
     });
+
+    await syncProbeEvidences(
+      {
+        signalId: signal.id,
+        launchId: launch.id,
+        producerId: producer.id,
+        rawData: signal.rawData,
+        confidence: signal.confidence,
+        capturedAt: firstSeenAtFromSignal(signal),
+      },
+      tx,
+    );
 
     const verified = await tx.signal.update({
       where: { id: signal.id },

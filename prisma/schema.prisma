@@ -14,6 +14,11 @@ enum Role {
   ADMIN
 }
 
+enum AccessPlan {
+  STANDARD
+  PREMIUM
+}
+
 enum LaunchStatus {
   DISCOVERY
   EARLY_SIGNAL
@@ -99,6 +104,7 @@ model User {
   passwordHash        String
   name                String
   role                Role     @default(USER)
+  plan                AccessPlan @default(STANDARD)
   locale              String   @default("en")
   niche               String?
   minCommissionPct    Decimal? @db.Decimal(5, 2)

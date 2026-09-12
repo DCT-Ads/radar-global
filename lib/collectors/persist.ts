@@ -9,6 +9,9 @@ import {
 import { upsertCrtshSignal } from "@/lib/signals/persist-crtsh";
 import { enrichSignal } from "@/lib/signals/enrich";
 import { loadKeywordVolumeContext } from "@/lib/signals/keyword-volume";
+import { inspectParking, isParked } from "@/lib/signals/anti-parking";
+import { syncProbeEvidences } from "@/lib/signals/probe-evidence";
+import { verifySignal } from "@/lib/signals/review";
 
 function asJsonObject(value: Prisma.JsonValue | null): Prisma.InputJsonObject {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -39,14 +42,15 @@ export async function persistHttpProbe(signalId: string, probe: HttpProbeResult)
     return;
   }
 
+  const parking = inspectParking(probe.landing);
   const previous = asJsonObject(signal.rawData);
   const rawData: Prisma.InputJsonObject = {
     ...previous,
     httpProbe: {
-      landing: probe.landing,
-      checkout: probe.checkout,
-      go: probe.go,
-      pay: probe.pay,
+      landing: { ...probe.landing, probedAt: probe.landing.probedAt ?? new Date().toISOString() },
+      checkout: { ...probe.checkout, probedAt: probe.checkout.probedAt ?? new Date().toISOString() },
+      go: { ...probe.go, probedAt: probe.go.probedAt ?? new Date().toISOString() },
+      pay: { ...probe.pay, probedAt: probe.pay.probedAt ?? new Date().toISOString() },
     },
     launchPending:
       signal.source === "whoisds" ? !probe.landing.live : previous.launchPending,
@@ -54,6 +58,15 @@ export async function persistHttpProbe(signalId: string, probe: HttpProbeResult)
       signal.source === "whoisds" && probe.landing.live
         ? new Date().toISOString()
         : (previous.launchAt ?? null),
+    ...(probe.landing.live && parking.parked
+      ? {
+          antiParking: {
+            parked: true,
+            reason: parking.reason,
+            checkedAt: new Date().toISOString(),
+          },
+        }
+      : {}),
   };
 
   const market = await loadKeywordVolumeContext();
@@ -71,6 +84,11 @@ export async function persistHttpProbe(signalId: string, probe: HttpProbeResult)
     maxKeywordVolume: market.maxVolume,
   });
 
+  const domain = signal.domain ?? signal.value;
+  console.log(
+    `[http_probe] ${domain} before-update status=${signal.status} http=${probe.landing.status ?? "none"} live=${probe.landing.live} title=${probe.landing.title ?? "—"}`,
+  );
+
   await prisma.signal.update({
     where: { id: signalId },
     data: {
@@ -81,6 +99,44 @@ export async function persistHttpProbe(signalId: string, probe: HttpProbeResult)
       langHint: enriched.langHint,
     },
   });
+
+  const title = probe.landing.title?.trim() ?? "";
+  const shouldVerify =
+    probe.landing.live &&
+    signal.status !== "VERIFIED" &&
+    signal.status !== "DISCARDED" &&
+    !isParked(probe.landing);
+
+  console.log(
+    `[http_probe] ${domain} after rawData update (status ainda=${signal.status}) critério live=${probe.landing.live} http=${probe.landing.status ?? "none"} titleLen=${title.length}`,
+  );
+
+  if (shouldVerify) {
+    console.log(`[http_probe] ${domain} calling verifySignal (NEW → VERIFIED)`);
+    try {
+      const verified = await verifySignal(signalId);
+      console.log(`[http_probe] ${domain} after-update status=${verified.status}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`[http_probe] ${domain} after-update FAILED verifySignal: ${message}`);
+      throw error;
+    }
+  } else if (signal.status === "VERIFIED" && signal.launchId && probe.landing.live && !parking.parked) {
+    await syncProbeEvidences({
+      signalId: signal.id,
+      launchId: signal.launchId,
+      producerId: signal.producerId,
+      rawData,
+      confidence: enriched.confidence,
+      capturedAt: signal.discoveredAt,
+    });
+  } else if (probe.landing.live && parking.parked) {
+    console.log(`[http_probe] ${domain} SKIP parked/thin (motivo=${parking.reason})`);
+  } else {
+    console.log(
+      `[http_probe] ${domain} after-update status=${signal.status} (não promoveu: live=${probe.landing.live})`,
+    );
+  }
 }
 
 export async function persistLandingReprobe(
@@ -88,18 +144,15 @@ export async function persistLandingReprobe(
   landing: ProbePathResult,
 ) {
   const signal = await prisma.signal.findUnique({ where: { id: signalId } });
-  if (!signal || signal.source !== "whoisds") {
+  if (!signal) {
     return;
   }
   if (signal.status === "VERIFIED" || signal.status === "DISCARDED") {
     return;
   }
 
+  const parking = inspectParking(landing);
   const previous = asJsonObject(signal.rawData);
-  if (previous.launchPending !== true) {
-    return;
-  }
-
   const previousProbe = asJsonObject(
     previous.httpProbe && typeof previous.httpProbe === "object" && !Array.isArray(previous.httpProbe)
       ? (previous.httpProbe as Prisma.JsonObject)
@@ -112,8 +165,20 @@ export async function persistLandingReprobe(
       ...previousProbe,
       landing,
     },
-    launchPending: !landing.live,
-    launchAt: landing.live ? new Date().toISOString() : (previous.launchAt ?? null),
+    launchPending:
+      signal.source === "whoisds" ? !landing.live : previous.launchPending,
+    launchAt: landing.live
+      ? new Date().toISOString()
+      : (previous.launchAt ?? null),
+    ...(landing.live && parking.parked
+      ? {
+          antiParking: {
+            parked: true,
+            reason: parking.reason,
+            checkedAt: new Date().toISOString(),
+          },
+        }
+      : {}),
   };
 
   const market = await loadKeywordVolumeContext();

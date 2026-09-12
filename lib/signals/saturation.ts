@@ -31,13 +31,21 @@ export function isUpcomingLaunch(input: {
 
 export const isUpcomingSignal = isUpcomingLaunch;
 
-export function registeredAtFromRaw(rawData: unknown): Date | null {
-  const raw = asJsonRecord(rawData);
-  const value = raw?.registeredAt;
+export function dateFromRawField(raw: Record<string, unknown> | null, key: string): Date | null {
+  const value = raw?.[key];
   if (typeof value === "string" && !Number.isNaN(Date.parse(value))) {
     return new Date(value);
   }
   return null;
+}
+
+export function registeredAtFromRaw(rawData: unknown): Date | null {
+  const raw = asJsonRecord(rawData);
+  return dateFromRawField(raw, "registeredAt") ?? dateFromRawField(raw, "issuedAt");
+}
+
+export function launchAtFromRaw(rawData: unknown): Date | null {
+  return dateFromRawField(asJsonRecord(rawData), "launchAt");
 }
 
 export function landingLiveFromRaw(rawData: unknown): boolean | null {

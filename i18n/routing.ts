@@ -1,9 +1,14 @@
 import { defineRouting } from "next-intl/routing";
 
+export const LOCALES = ["en", "pt", "es"] as const;
+export type Locale = (typeof LOCALES)[number];
+
 export const routing = defineRouting({
-  locales: ["en", "pt", "es"],
+  locales: LOCALES,
   defaultLocale: "pt",
   localePrefix: "as-needed",
 });
 
-export type Locale = (typeof routing.locales)[number];
+export function assertLocale(value: string): Locale {
+  return (LOCALES.includes(value as Locale) ? value : "pt") as Locale;
+}
