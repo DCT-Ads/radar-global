@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": "20.x"
   },
   "scripts": {
     "dev": "next dev --webpack",
@@ -31,9 +31,6 @@
     "test:producer-contact": "tsx lib/producers/contact.test.ts",
     "test:producer-enrich": "tsx lib/producers/enrich.test.ts",
     "reprobe:nrd": "tsx scripts/reprobe-nrd.ts"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
