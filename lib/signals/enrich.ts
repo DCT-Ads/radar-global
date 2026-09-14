@@ -36,6 +36,7 @@ const SOURCE_RELIABILITY: Record<string, number> = {
   whoisds: 85,
   digistore24: 80,
   youtube: 80,
+  muncheye: 70,
 };
 
 function clamp01(value: number) {

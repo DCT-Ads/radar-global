@@ -2,6 +2,8 @@ import { collectJvzoo } from "../lib/collectors/marketplace/jvzoo";
 import { marketplaceLaunchToSignalPayload } from "../lib/collectors/marketplace/adapter";
 import { persistMarketplaceLaunch } from "../lib/signals/persist-marketplace";
 import { prisma } from "../lib/prisma";
+import { backupSignals } from "./backup-signals";
+import { confirmSignalDelete } from "./confirm-signal-delete";
 
 async function replaceJvzooSignals() {
   const [total, withLaunch, withProducer, withEvidence] = await Promise.all([
@@ -31,7 +33,11 @@ async function replaceJvzooSignals() {
     console.log(`Evidence desvinculada: ${detached.count}`);
   }
 
-  const deleted = await prisma.signal.deleteMany({ where: { source: "jvzoo" } });
+  await backupSignals("persist-jvzoo-replace");
+  await confirmSignalDelete(`Vai apagar ${total} signals source=jvzoo.`);
+  const deleted = await prisma.signal.deleteMany({
+    where: { source: "jvzoo", confidence: 0, niche: null, countryHint: null, enrichedAt: null },
+  });
   console.log(`Apagados source=jvzoo: ${deleted.count}`);
   return deleted.count;
 }

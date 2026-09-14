@@ -16,3 +16,18 @@ export function nicheForKeyword(keyword: string): string | null {
   }
   return null;
 }
+
+export function keywordFromText(text: string | null | undefined): {
+  keyword: string | null;
+  niche: string | null;
+} {
+  if (!text) {
+    return { keyword: null, niche: null };
+  }
+  const haystack = text.toLowerCase();
+  const keyword =
+    ALL_KEYWORDS.find(
+      (item) => haystack.includes(item) || haystack.includes(item.replace(/\s+/g, "")),
+    ) ?? null;
+  return { keyword, niche: keyword ? nicheForKeyword(keyword) : null };
+}

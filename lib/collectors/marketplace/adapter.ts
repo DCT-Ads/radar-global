@@ -28,23 +28,45 @@ export function warriorplusOfferKey(offerLink: string): string | null {
   }
 }
 
+const MUNCHEYE_HOSTS = new Set(["muncheye.com", "www.muncheye.com"]);
+
+export function muncheyeSlugFromUrl(url: string): string | null {
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "");
+    const slug = path.split("/").filter(Boolean).pop();
+    if (!slug || slug === "page" || /^\d+$/.test(slug)) {
+      return null;
+    }
+    return slug.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 export function marketplaceLaunchToSignalPayload(item: MarketplaceLaunch) {
   const warriorKey =
     item.source === "warriorplus" ? warriorplusOfferKey(item.url) : null;
   const jvzooPid = item.source === "jvzoo" ? jvzooPidFromUrl(item.url) : null;
+  const url = jvzooPid ? jvzooCanonicalUrl(jvzooPid) : item.url;
+  const host = hostFromUrl(url);
+  const muncheyeHost =
+    item.source === "muncheye" && host && !MUNCHEYE_HOSTS.has(host) ? host : null;
   const value = warriorKey
     ? warriorKey
     : jvzooPid
       ? `jvzoo:${jvzooPid}`
-      : [
-          item.source,
-          item.product_name.toLowerCase().trim(),
-          item.launch_date ?? "undated",
-        ].join(":");
-  const url = jvzooPid ? jvzooCanonicalUrl(jvzooPid) : item.url;
+      : muncheyeHost
+        ? `muncheye:${muncheyeHost}`
+        : [
+            item.source,
+            item.product_name.toLowerCase().trim(),
+            item.launch_date ?? "undated",
+          ].join(":");
   const domain = warriorKey
     ? `warriorplus.com${warriorKey}`
-    : hostFromUrl(url);
+    : item.source === "muncheye"
+      ? muncheyeHost
+      : host;
 
   return {
     type: "LANDING_PAGE" as const,
@@ -52,6 +74,7 @@ export function marketplaceLaunchToSignalPayload(item: MarketplaceLaunch) {
     value,
     url,
     niche: item.niche,
+    keyword: item.keyword ?? null,
     domain,
     rawData: {
       product_name: item.product_name,

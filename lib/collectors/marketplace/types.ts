@@ -9,6 +9,7 @@ export type MarketplaceLaunch = {
   launch_date: string | null;
   status: MarketplaceStatus;
   niche: string | null;
+  keyword?: string | null;
   url: string;
   raw_scraped_at: string;
 };
