@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
 import { runCrtshCollection } from "../lib/collectors/run-collection";
 import { runPendingNrdReprobe } from "../lib/collectors/reprobe-nrd";
-import { COLLECT_JOB_NAME, COLLECT_QUEUE_NAME, scheduleCollectCron } from "../lib/queue/collect";
+import { COLLECT_JOB_NAME, COLLECT_QUEUE_NAME, drainStaleCollectJobs, scheduleCollectCron } from "../lib/queue/collect";
 import { REPROBE_JOB_NAME, scheduleReprobeCron } from "../lib/queue/reprobe";
 import { getRedis } from "../lib/queue/connection";
 
@@ -10,6 +10,11 @@ async function main() {
   if (!connection) {
     console.error("REDIS_URL is required to run the worker");
     process.exit(1);
+  }
+
+  const cleared = await drainStaleCollectJobs();
+  if (cleared > 0) {
+    console.log(`Cleared ${cleared} leftover collect/reprobe job(s)`);
   }
 
   const collectScheduled = await scheduleCollectCron();
@@ -45,6 +50,8 @@ async function main() {
     {
       connection,
       concurrency: 1,
+      removeOnComplete: { count: 20 },
+      removeOnFail: { count: 50 },
     },
   );
 

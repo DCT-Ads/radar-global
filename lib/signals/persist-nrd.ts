@@ -82,10 +82,6 @@ export async function upsertNrdSignal(
   const countryHint = keepFilledString(enriched.countryHint);
   const langHint = keepFilledString(enriched.langHint);
   const confidence = keepFilledConfidence(enriched.confidence);
-  const markEnriched =
-    Boolean(confidence) || Boolean(niche) || Boolean(countryHint)
-      ? new Date()
-      : undefined;
 
   const signal = await prisma.signal.upsert({
     where: {
@@ -105,7 +101,6 @@ export async function upsertNrdSignal(
       langHint,
       status: "NEW",
       discoveredAt,
-      enrichedAt: markEnriched,
     },
     update: {
       rawData,
@@ -114,7 +109,6 @@ export async function upsertNrdSignal(
       ...(confidence ? { confidence } : {}),
       ...(countryHint ? { countryHint } : {}),
       ...(langHint ? { langHint } : {}),
-      ...(markEnriched && !existing?.enrichedAt ? { enrichedAt: markEnriched } : {}),
     },
   });
 

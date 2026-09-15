@@ -97,6 +97,7 @@ export async function persistHttpProbe(signalId: string, probe: HttpProbeResult)
       confidence: enriched.confidence,
       countryHint: enriched.countryHint,
       langHint: enriched.langHint,
+      enrichedAt: signal.enrichedAt ?? new Date(),
     },
   });
 
@@ -204,6 +205,7 @@ export async function persistLandingReprobe(
       confidence: enriched.confidence,
       countryHint: enriched.countryHint,
       langHint: enriched.langHint,
+      enrichedAt: signal.enrichedAt ?? new Date(),
     },
   });
 }

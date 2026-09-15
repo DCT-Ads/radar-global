@@ -5,6 +5,8 @@ import { runCrtshCollection, type CollectionResult } from "@/lib/collectors/run-
 export const COLLECT_QUEUE_NAME = "radar-collect";
 export const COLLECT_JOB_NAME = "crtsh-scan";
 export const COLLECT_REPEAT_EVERY_MS = 6 * 60 * 60 * 1000;
+export const MANUAL_COLLECT_JOB_ID = "collect-manual";
+export const MANUAL_REPROBE_JOB_ID = "reprobe-manual";
 
 export function getCollectQueue() {
   const connection = getRedis();
@@ -19,14 +21,21 @@ export async function enqueueOrRunCollection(): Promise<
 > {
   const queue = getCollectQueue();
   if (queue) {
-    await queue.add(
-      COLLECT_JOB_NAME,
-      { triggeredAt: new Date().toISOString() },
-      {
-        removeOnComplete: 20,
-        removeOnFail: 50,
-      },
-    );
+    try {
+      await queue.add(
+        COLLECT_JOB_NAME,
+        { triggeredAt: new Date().toISOString() },
+        {
+          jobId: MANUAL_COLLECT_JOB_ID,
+          removeOnComplete: 20,
+          removeOnFail: 50,
+        },
+      );
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes("already exists")) {
+        throw error;
+      }
+    }
     return { mode: "queued" };
   }
   const result = await runCrtshCollection();
@@ -41,7 +50,32 @@ export async function scheduleCollectCron() {
   await queue.upsertJobScheduler(
     "crtsh-scan-every-6h",
     { every: COLLECT_REPEAT_EVERY_MS },
-    { name: COLLECT_JOB_NAME, data: { kind: "cron" } },
+    {
+      name: COLLECT_JOB_NAME,
+      data: { kind: "cron" },
+      opts: { removeOnComplete: 10, removeOnFail: 20 },
+    },
   );
   return true;
+}
+
+export async function drainStaleCollectJobs() {
+  const queue = getCollectQueue();
+  if (!queue) {
+    return 0;
+  }
+  const waiting = await queue.getJobs(["waiting", "paused"]);
+  let removed = 0;
+  for (const job of waiting) {
+    const id = String(job.id ?? "");
+    const repeat = Boolean(job.repeatJobKey) || id.startsWith("repeat:");
+    if (repeat) {
+      continue;
+    }
+    if (job.name === COLLECT_JOB_NAME || job.name === "nrd-reprobe") {
+      await job.remove();
+      removed += 1;
+    }
+  }
+  return removed;
 }

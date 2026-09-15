@@ -52,6 +52,9 @@ export async function runNrdCollection(
       for (const hit of hits) {
         const saved = await upsertNrdSignal(hit);
         persisted += 1;
+        if (saved.signal.enrichedAt) {
+          continue;
+        }
         try {
           const probe = await probeLaunch(hit.domain);
           await persistHttpProbe(saved.signal.id, probe);
@@ -210,6 +213,9 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
     let probed = 0;
     for (const item of discovered) {
       const persisted = await persistDiscoveredDomain(item);
+      if (persisted.signal.enrichedAt) {
+        continue;
+      }
       try {
         const probe = await probeLaunch(item.domain);
         await persistHttpProbe(persisted.signal.id, probe);
