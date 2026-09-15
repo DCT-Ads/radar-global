@@ -9,6 +9,7 @@ import {
   SaturationLegend,
   type SaturationFilter,
 } from "@/components/admin/saturation-legend";
+import { ConfidenceCell } from "@/components/admin/confidence-cell";
 import { SignalReviewActions } from "@/components/admin/signal-review-actions";
 import { SignalTableSaturation } from "@/components/admin/signal-table-saturation";
 import { Link } from "@/i18n/navigation";
@@ -293,7 +294,15 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                       <td className="py-3 pr-4 text-muted-foreground">
                         {signal.langHint ?? "—"}
                       </td>
-                      <td className="py-3 pr-4">{signal.confidence}</td>
+                      <td className="py-3 pr-4">
+                        <ConfidenceCell
+                          source={signal.source}
+                          keyword={signal.keyword}
+                          rawData={signal.rawData}
+                          confidence={signal.confidence}
+                          incompleteLabel={t("confidenceIncomplete")}
+                        />
+                      </td>
                       <td className="py-3 pr-4">
                         <SignalTableSaturation
                           level={level}

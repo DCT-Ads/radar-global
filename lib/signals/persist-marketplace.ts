@@ -2,7 +2,7 @@ import type { Prisma, Signal } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { marketplaceLaunchToSignalPayload } from "@/lib/collectors/marketplace/adapter";
 import type { MarketplaceLaunch } from "@/lib/collectors/marketplace/types";
-import { enrichSignal } from "@/lib/signals/enrich";
+import { enrichmentIsIncomplete, enrichSignal } from "@/lib/signals/enrich";
 import { keepFilledConfidence, keepFilledString } from "@/lib/signals/filled-fields";
 import { loadKeywordVolumeContext } from "@/lib/signals/keyword-volume";
 
@@ -35,6 +35,10 @@ export async function persistMarketplaceLaunch(
   const keyword = keepFilledString(payload.keyword);
   const niche = keepFilledString(payload.niche);
   const keywordVolume = (keyword ? (market.byKeyword[keyword] ?? 0) : 0) + 1;
+  const incomplete = enrichmentIsIncomplete({
+    keyword,
+    evidenceCount: 0,
+  });
   const enriched = enrichSignal({
     domain: payload.domain,
     keyword,
@@ -43,11 +47,12 @@ export async function persistMarketplaceLaunch(
     keywordVolume,
     maxKeywordVolume: Math.max(market.maxVolume, keywordVolume),
   });
-  const confidence = keepFilledConfidence(enriched.confidence) ?? 0;
+  const confidence = incomplete
+    ? 0
+    : (keepFilledConfidence(enriched.confidence) ?? 0);
   const countryHint = keepFilledString(enriched.countryHint);
   const langHint = keepFilledString(enriched.langHint);
-  const enrichedAt =
-    confidence > 0 || niche || countryHint ? discoveredAt : undefined;
+  const enrichedAt = incomplete ? undefined : discoveredAt;
 
   try {
     const signal = await prisma.signal.create({

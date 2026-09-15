@@ -154,6 +154,7 @@
     "reviewNext": "Próxima",
     "reviewPage": "Página {page} de {total}",
     "colSource": "Fonte",
+    "confidenceIncomplete": "Incompleto",
     "colConfidence": "Confiança",
     "colSaturation": "Saturação",
     "saturationTableSaturated": "Saturado",

@@ -1,5 +1,6 @@
 import { ageInDays } from "@/lib/collectors/domains";
 import { inferGeo } from "@/lib/signals/geo-from-domain";
+import { landingLiveFromRaw } from "@/lib/signals/saturation";
 
 export type EnrichmentInput = {
   domain: string;
@@ -19,6 +20,8 @@ export type EnrichmentResult = {
   countryHint: string | null;
   langHint: string | null;
 };
+
+const PROBED_SOURCES = new Set(["whoisds", "crt.sh", "muncheye"]);
 
 /** Soma = 100. Cada fator entra como 0–1 × peso. */
 export const CONFIDENCE_WEIGHTS = {
@@ -69,6 +72,34 @@ function evidenceCountFactor(evidenceCount: number) {
   return clamp01(evidenceCount / 2);
 }
 
+export function enrichmentIsIncomplete(input: {
+  keyword?: string | null;
+  landingLive?: boolean;
+  evidenceCount?: number;
+}) {
+  const hasKeyword = Boolean(input.keyword?.trim());
+  const probed = typeof input.landingLive === "boolean";
+  const hasEvidence = (input.evidenceCount ?? 0) > 0;
+  return !hasKeyword || (!probed && !hasEvidence);
+}
+
+export function isStoredSignalIncomplete(signal: {
+  source: string;
+  keyword: string | null;
+  rawData: unknown;
+}) {
+  if (!signal.keyword?.trim()) {
+    return true;
+  }
+  if (
+    PROBED_SOURCES.has(signal.source) &&
+    landingLiveFromRaw(signal.rawData) === null
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function enrichSignal(input: EnrichmentInput): EnrichmentResult {
   const geo = inferGeo({
     domain: input.domain,
@@ -76,6 +107,7 @@ export function enrichSignal(input: EnrichmentInput): EnrichmentResult {
     pageLocale: input.pageLocale,
   });
   const days = Math.max(0, ageInDays(input.discoveredAt));
+  const hasKeyword = Boolean(input.keyword?.trim());
   const volume = Math.max(1, input.keywordVolume ?? 1);
   const maxVolume = input.maxKeywordVolume ?? volume;
 
@@ -83,8 +115,12 @@ export function enrichSignal(input: EnrichmentInput): EnrichmentResult {
     CONFIDENCE_WEIGHTS.age * ageFactor(days) +
     CONFIDENCE_WEIGHTS.sourceReliability *
       sourceReliabilityFactor(input.source, input.sourceReliability) +
-    CONFIDENCE_WEIGHTS.keywordVolume * keywordVolumeFactor(volume, maxVolume) +
-    CONFIDENCE_WEIGHTS.landingLive * landingLiveFactor(Boolean(input.landingLive)) +
+    (hasKeyword
+      ? CONFIDENCE_WEIGHTS.keywordVolume * keywordVolumeFactor(volume, maxVolume)
+      : 0) +
+    (typeof input.landingLive === "boolean"
+      ? CONFIDENCE_WEIGHTS.landingLive * landingLiveFactor(input.landingLive)
+      : 0) +
     CONFIDENCE_WEIGHTS.evidenceCount * evidenceCountFactor(input.evidenceCount ?? 0);
 
   return {
