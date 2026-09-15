@@ -137,7 +137,8 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
 
   const withLevel = fetched.map((signal) => {
     const level = getSaturationLevel({
-      keywordVolume: signal.keyword ? (byKeyword[signal.keyword] ?? 1) : 1,
+      keyword: signal.keyword,
+      keywordVolume: signal.keyword ? (byKeyword[signal.keyword] ?? 1) : 0,
       medianVolume: median,
       p75Volume: p75,
       confidence: signal.confidence,
@@ -153,9 +154,11 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
   const rows =
     sat === "UPCOMING"
       ? withLevel.filter((row) => row.upcoming)
-      : sat
-        ? withLevel.filter((row) => row.level === sat)
-        : withLevel;
+      : sat === "UNKNOWN"
+        ? withLevel.filter((row) => row.level === null)
+        : sat
+          ? withLevel.filter((row) => row.level === sat)
+          : withLevel;
 
   const countByStatus = Object.fromEntries(
     SIGNAL_STATUSES.map((item) => [
@@ -199,6 +202,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                 saturationSaturated: t("saturationSaturated"),
                 saturationWarning: t("saturationWarning"),
                 saturationSafe: t("saturationSafe"),
+                saturationUnknown: t("saturationUnknown"),
                 upcomingLaunch: t("upcomingLaunch"),
               }}
             />
@@ -312,6 +316,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                             moderate: t("saturationTableWarning"),
                             hot: t("saturationTableSafe"),
                             upcomingLaunch: t("upcomingLaunch"),
+                            unknown: t("saturationUnknown"),
                           }}
                         />
                       </td>

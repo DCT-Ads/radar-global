@@ -146,11 +146,16 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
             <h1 className="text-3xl font-semibold tracking-tight text-primary">{domain}</h1>
             <SignalStatusBadge status={signal.status} />
             <SaturationLegend
-              activeKey={upcoming ? "UPCOMING" : getSaturationLevel(saturationInputs)}
+              activeKey={
+                upcoming
+                  ? "UPCOMING"
+                  : (getSaturationLevel(saturationInputs) ?? "UNKNOWN")
+              }
               labels={{
                 saturationSaturated: t("saturationSaturated"),
                 saturationWarning: t("saturationWarning"),
                 saturationSafe: t("saturationSafe"),
+                saturationUnknown: t("saturationUnknown"),
                 upcomingLaunch: t("upcomingLaunch"),
               }}
             />

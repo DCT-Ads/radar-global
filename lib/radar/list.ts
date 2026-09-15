@@ -20,7 +20,7 @@ export type RadarLaunchRow = {
   earlySignal: number | null;
   dataQuality: number | null;
   confidence: "LOW" | "MED" | "HIGH";
-  saturation: SaturationLevel;
+  saturation: SaturationLevel | null;
   upcoming: boolean;
   keyword: string | null;
   evidenceCount: number;
@@ -84,7 +84,8 @@ export async function listVerifiedRadarLaunches(options?: {
     const latestSignal = launch.signals[0];
     const keyword = latestSignal?.keyword ?? launch.niche ?? null;
     const saturation = getSaturationLevel({
-      keywordVolume: keyword ? (byKeyword[keyword] ?? 1) : 1,
+      keyword,
+      keywordVolume: keyword ? (byKeyword[keyword] ?? 1) : 0,
       medianVolume: median,
       p75Volume: p75,
       confidence: latestSignal?.confidence ?? 0,

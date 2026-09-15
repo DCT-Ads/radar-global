@@ -4,6 +4,7 @@ export const SATURATION_FILTERS = [
   "SATURATED",
   "WARNING",
   "SAFE",
+  "UNKNOWN",
   "UPCOMING",
 ] as const;
 
@@ -26,6 +27,11 @@ const CHIPS = [
     cls: "bg-green-600 text-white animate-pulse",
   },
   {
+    key: "UNKNOWN",
+    labelKey: "saturationUnknown",
+    cls: "border border-border bg-background text-muted-foreground",
+  },
+  {
     key: "UPCOMING",
     labelKey: "upcomingLaunch",
     cls: "bg-blue-600 text-white animate-pulse",
@@ -37,6 +43,7 @@ type SaturationLegendProps = {
     saturationSaturated: string;
     saturationWarning: string;
     saturationSafe: string;
+    saturationUnknown: string;
     upcomingLaunch: string;
   };
   activeKey?: SaturationFilter;

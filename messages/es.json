@@ -65,6 +65,7 @@
     "satSaturated": "Saturado",
     "satModerate": "Moderado",
     "satHot": "Hot",
+    "satUnknown": "Desconocido",
     "emptyChart": "Não encontrado em fontes públicas",
     "emptySignals": "Aún no hay señales"
   },
@@ -215,6 +216,7 @@
     "saturationSaturated": "🔴 MERCADO SATURADO",
     "saturationWarning": "🟡 COMPETENCIA MODERADA",
     "saturationSafe": "🟢 OPORTUNIDAD CALIENTE",
+    "saturationUnknown": "Desconocido",
     "upcomingLaunch": "Aún no lanzó",
     "colRegistered": "Registrado",
     "colLaunchAt": "Lanzamiento",
@@ -240,6 +242,7 @@
     "satSaturated": "Saturado",
     "satWarning": "Moderado",
     "satSafe": "Hot",
+    "satUnknown": "Desconocido",
     "upcoming": "Aún no lanzó",
     "launchNotFound": "Lanzamiento no encontrado",
     "producerNotFound": "Productor no encontrado",

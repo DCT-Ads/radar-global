@@ -1,3 +1,5 @@
+import type { Marketplace } from "@prisma/client";
+import { marketplaceDefaultCurrency } from "@/lib/collectors/commission/types";
 import { ageInDays } from "@/lib/collectors/domains";
 import { prisma } from "@/lib/prisma";
 import { firstSeenAtFromLaunch } from "@/lib/radar/first-seen";
@@ -15,6 +17,7 @@ export function formatAffiliateCommission(commission?: {
   commissionPct?: { toString(): string } | number | null;
   amountCents?: number | null;
   currency?: string | null;
+  marketplace?: Marketplace | null;
 } | null) {
   if (!commission) {
     return null;
@@ -27,7 +30,12 @@ export function formatAffiliateCommission(commission?: {
   }
   if (commission.amountCents != null) {
     const amount = (commission.amountCents / 100).toFixed(2);
-    return `${amount} ${commission.currency ?? "USD"}`;
+    const currency =
+      commission.currency ??
+      (commission.marketplace
+        ? marketplaceDefaultCurrency(commission.marketplace)
+        : "USD");
+    return `${amount} ${currency}`;
   }
   return null;
 }
@@ -91,7 +99,8 @@ export async function getRadarLaunch(id: string) {
   const latestSignal = launch.signals[0];
   const keyword = latestSignal?.keyword ?? launch.niche ?? null;
   const saturation = getSaturationLevel({
-    keywordVolume: keyword ? (byKeyword[keyword] ?? 1) : 1,
+    keyword,
+    keywordVolume: keyword ? (byKeyword[keyword] ?? 1) : 0,
     medianVolume: median,
     p75Volume: p75,
     confidence: latestSignal?.confidence ?? 0,

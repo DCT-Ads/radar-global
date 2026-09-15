@@ -73,14 +73,20 @@ export function weightedAverage(factors: ObservedFactor[]) {
 
 export function goldenWindowRank(
   earlySignal: number | null,
-  saturation: SaturationLevel,
+  saturation: SaturationLevel | null,
   firstSeenDaysAgo: number,
 ) {
   if (earlySignal == null) {
     return Number.NEGATIVE_INFINITY;
   }
   const satMul =
-    saturation === "SATURATED" ? 0.25 : saturation === "WARNING" ? 0.6 : 1;
+    saturation === "SATURATED"
+      ? 0.25
+      : saturation === "WARNING"
+        ? 0.6
+        : saturation === "SAFE"
+          ? 1
+          : 0.5;
   const recency = Math.exp(
     -Math.max(0, firstSeenDaysAgo) / GOLDEN_WINDOW_HALF_LIFE_DAYS,
   );

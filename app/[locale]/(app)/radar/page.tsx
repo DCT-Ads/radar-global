@@ -72,6 +72,7 @@ export default async function RadarPage({ params }: RadarPageProps) {
                       moderate: t("satWarning"),
                       hot: t("satSafe"),
                       upcomingLaunch: t("upcoming"),
+                      unknown: t("satUnknown"),
                     }}
                   />
                 </CardHeader>

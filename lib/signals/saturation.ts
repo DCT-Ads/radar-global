@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export type SaturationLevel = "SAFE" | "WARNING" | "SATURATED";
 
 export type SaturationInputs = {
+  keyword?: string | null;
   keywordVolume: number;
   medianVolume: number;
   p75Volume: number;
@@ -41,7 +42,23 @@ export function dateFromRawField(raw: Record<string, unknown> | null, key: strin
 
 export function registeredAtFromRaw(rawData: unknown): Date | null {
   const raw = asJsonRecord(rawData);
-  return dateFromRawField(raw, "registeredAt") ?? dateFromRawField(raw, "issuedAt");
+  const date =
+    dateFromRawField(raw, "registeredAt") ?? dateFromRawField(raw, "registered_at");
+  if (!date) {
+    return null;
+  }
+  const listDate = typeof raw?.listDate === "string" ? raw.listDate : null;
+  if (
+    listDate &&
+    date.getUTCHours() === 0 &&
+    date.getUTCMinutes() === 0 &&
+    date.getUTCSeconds() === 0 &&
+    date.getUTCMilliseconds() === 0 &&
+    date.toISOString().slice(0, 10) === listDate
+  ) {
+    return null;
+  }
+  return date;
 }
 
 export function launchAtFromRaw(rawData: unknown): Date | null {
@@ -82,16 +99,27 @@ export function indexKeywordVolumes(
   return { byKeyword, ...volumePercentiles(Object.values(byKeyword)) };
 }
 
-export function getSaturationLevel(signal: SaturationInputs): SaturationLevel {
-  const { keywordVolume, medianVolume, p75Volume } = signal;
+export function getSaturationLevel(signal: SaturationInputs): SaturationLevel | null {
+  if (!signal.keyword?.trim()) {
+    return null;
+  }
 
-  if (p75Volume > 0 && keywordVolume >= p75Volume) {
+  const competitors = Math.max(0, signal.keywordVolume);
+  const age = Math.max(0, signal.firstSeenDaysAgo);
+  const median = signal.medianVolume;
+  const p75 = signal.p75Volume;
+  const spread = p75 > median && p75 > 1;
+
+  if ((spread && competitors >= p75) || competitors >= 15 || age >= 45) {
     return "SATURATED";
   }
-  if (medianVolume > 0 && keywordVolume > medianVolume) {
+  if ((spread && competitors > median) || competitors >= 6 || age >= 14) {
     return "WARNING";
   }
-  return "SAFE";
+  if (competitors >= 1 && age < 14) {
+    return "SAFE";
+  }
+  return null;
 }
 
 export async function saturationInputsForSignal(signal: {
@@ -108,9 +136,10 @@ export async function saturationInputsForSignal(signal: {
   const { byKeyword, median, p75 } = indexKeywordVolumes(grouped);
   const keywordVolume = signal.keyword
     ? (byKeyword[signal.keyword] ?? 1)
-    : 1;
+    : 0;
 
   return {
+    keyword: signal.keyword,
     keywordVolume,
     medianVolume: median,
     p75Volume: p75,
