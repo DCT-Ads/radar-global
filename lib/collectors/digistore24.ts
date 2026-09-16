@@ -1,9 +1,12 @@
-import { ALL_KEYWORDS, nicheForKeyword } from "@/lib/niches";
+import { ALL_KEYWORDS, matchesKeywordWord, nicheForKeyword } from "@/lib/niches";
 import { cleanHost } from "./domains";
+import { emptyDropStats, type CollectorDropStats } from "./drop-stats";
 
 export const DIGISTORE24_SOURCE = "digistore24";
 export const DIGISTORE24_API_URL =
   "https://www.digistore24.com/api/call/listMarketplaceEntries";
+export const DIGISTORE24_PRODUCTS_URL =
+  "https://www.digistore24.com/api/call/listProducts";
 
 export type Digistore24Hit = {
   entryId: string;
@@ -87,11 +90,41 @@ function entryDomain(url: string): string | null {
 
 function matchKeyword(text: string, keywords: string[]): string | null {
   for (const keyword of keywords) {
-    if (text.includes(keyword)) {
+    if (matchesKeywordWord(text, keyword)) {
       return keyword;
     }
   }
   return null;
+}
+
+function catalogCount(payload: unknown, entries: RawEntry[]): number {
+  const root = asRecord(payload);
+  const data = asRecord(root?.data);
+  const raw = data?.count ?? root?.count;
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return raw;
+  }
+  if (typeof raw === "string" && /^\d+$/.test(raw)) {
+    return Number(raw);
+  }
+  return entries.length;
+}
+
+function readVendorProductCount(payload: unknown): number | null {
+  const root = asRecord(payload);
+  if (!root) {
+    return null;
+  }
+  const data = asRecord(root.data);
+  const raw = data?.totalCount ?? root.totalCount ?? data?.count ?? root.count;
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return raw;
+  }
+  if (typeof raw === "string" && /^\d+$/.test(raw)) {
+    return Number(raw);
+  }
+  const list = root.products ?? data?.products;
+  return Array.isArray(list) ? list.length : null;
 }
 
 function extractEntries(payload: unknown): RawEntry[] {
@@ -115,23 +148,28 @@ export function parseDigistore24Hits(
   payload: unknown,
   keywords: string[],
   maxHits: number,
-): Digistore24Hit[] {
+): { hits: Digistore24Hit[]; stats: CollectorDropStats; catalogCount: number } {
   const needles = keywords.map((item) => item.toLowerCase());
   const hits: Digistore24Hit[] = [];
   const seen = new Set<string>();
   const now = new Date();
+  const entries = extractEntries(payload);
+  const stats = emptyDropStats();
+  stats.fetched = entries.length;
 
-  for (const entry of extractEntries(payload)) {
+  for (const entry of entries) {
     const id = entryId(entry);
     if (!id || seen.has(id)) {
       continue;
     }
     const keyword = matchKeyword(entryHaystack(entry), needles);
     if (!keyword) {
+      stats.keywordMiss += 1;
       continue;
     }
     const niche = nicheForKeyword(keyword);
     if (!niche) {
+      stats.noNiche += 1;
       continue;
     }
     const url = entryUrl(entry, id);
@@ -149,7 +187,12 @@ export function parseDigistore24Hits(
       break;
     }
   }
-  return hits;
+  stats.kept = hits.length;
+  return {
+    hits,
+    stats,
+    catalogCount: catalogCount(payload, entries),
+  };
 }
 
 async function defaultFetch(input: { url: string; apiKey: string }): Promise<unknown> {
@@ -167,11 +210,32 @@ async function defaultFetch(input: { url: string; apiKey: string }): Promise<unk
   return response.json();
 }
 
+export function emptyCatalogError(
+  catalogCount: number,
+  vendorCount: number | null,
+  stats: CollectorDropStats,
+): Error {
+  const vendor =
+    vendorCount == null ? "listProducts n/a" : `listProducts (conta vendor) count=${vendorCount}`;
+  return new Error(
+    `catálogo vazio: listMarketplaceEntries count=${catalogCount} ` +
+      `(endpoint público de discovery). ${vendor}. ` +
+      `Key sem listing — não é filtro de domínio. ` +
+      `fetched=${stats.fetched} keywordMiss=${stats.keywordMiss} noNiche=${stats.noNiche} ` +
+      `tooOld=${stats.tooOld} apexMiss=${stats.apexMiss} kept=${stats.kept}`,
+  );
+}
+
 export async function fetchDigistore24Hits(input: {
   keywords?: string[];
   maxHits: number;
   fetchFn?: Digistore24FetchFn;
-}): Promise<{ hits: Digistore24Hit[] }> {
+}): Promise<{
+  hits: Digistore24Hit[];
+  stats: CollectorDropStats;
+  catalogCount: number;
+  vendorProductCount: number | null;
+}> {
   const { getDigistore24ApiKey } = await import("@/lib/integrations/digistore24-config");
   const apiKey = await getDigistore24ApiKey();
   if (!apiKey) {
@@ -183,11 +247,30 @@ export async function fetchDigistore24Hits(input: {
     apiKey,
   });
 
+  const parsed = parseDigistore24Hits(
+    payload,
+    input.keywords ?? ALL_KEYWORDS,
+    input.maxHits,
+  );
+
+  let vendorProductCount: number | null = null;
+  if (parsed.catalogCount === 0 && !input.fetchFn) {
+    try {
+      const products = await defaultFetch({ url: DIGISTORE24_PRODUCTS_URL, apiKey });
+      vendorProductCount = readVendorProductCount(products);
+    } catch {
+      vendorProductCount = null;
+    }
+  }
+
+  if (parsed.catalogCount === 0) {
+    throw emptyCatalogError(parsed.catalogCount, vendorProductCount, parsed.stats);
+  }
+
   return {
-    hits: parseDigistore24Hits(
-      payload,
-      input.keywords ?? ALL_KEYWORDS,
-      input.maxHits,
-    ),
+    hits: parsed.hits,
+    stats: parsed.stats,
+    catalogCount: parsed.catalogCount,
+    vendorProductCount,
   };
 }

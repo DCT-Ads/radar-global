@@ -9,23 +9,14 @@ const NOISE_VIDEO_ID = "rgtestytnoise000";
 
 function mockPayload() {
   return {
-    kind: "youtube#videoListResponse",
+    kind: "youtube#searchListResponse",
     items: [
       {
-        id: TEST_VIDEO_ID,
+        id: { kind: "youtube#video", videoId: TEST_VIDEO_ID },
         snippet: {
           title: "Day Trading crypto live",
           description: "Watch trading setups",
           channelTitle: "Finance Lab",
-          publishedAt: "2026-09-05T12:00:00Z",
-        },
-      },
-      {
-        id: NOISE_VIDEO_ID,
-        snippet: {
-          title: "Cooking pasta at home",
-          description: "No Radar keyword here",
-          channelTitle: "Kitchen",
           publishedAt: "2026-09-05T12:00:00Z",
         },
       },

@@ -17,6 +17,7 @@ export type MarketplaceLaunch = {
 export type MarketplaceCollectResult = {
   source: MarketplaceSource;
   items: MarketplaceLaunch[];
+  listed?: number;
   errors: string[];
   httpStatus: number | null;
   finalUrl: string | null;

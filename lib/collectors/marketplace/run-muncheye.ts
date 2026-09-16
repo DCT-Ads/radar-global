@@ -1,6 +1,10 @@
 import { persistMarketplaceLaunch } from "@/lib/signals/persist-marketplace";
+import { persistHttpProbe } from "@/lib/collectors/persist";
+import { probeLaunch } from "@/lib/collectors/http-probe";
 import { formatRelativeTime } from "@/lib/format/relative-time";
 import { prisma } from "@/lib/prisma";
+import { applyMuncheyeKeyword } from "@/lib/signals/backfill-muncheye-keywords";
+import { lastErrorIfEmpty, logDropStats } from "@/lib/collectors/drop-stats";
 import { ensureSources, SOURCE_SLUGS } from "@/lib/sources";
 import { collectMuncheye } from "./muncheye";
 
@@ -11,6 +15,7 @@ export type MuncheyeCardStats = {
   lastCollectAgo: string;
   newLaunches: number;
   enriched: number;
+  missingKeywords: number;
   autoDaily: boolean;
 };
 
@@ -34,13 +39,22 @@ async function heartbeat(lastError: string | null) {
 }
 
 export async function countMuncheyeSignals() {
-  const [newLaunches, enriched] = await Promise.all([
+  const [newLaunches, enriched, missingKeywords] = await Promise.all([
     prisma.signal.count({ where: { source: MUNCHEYE_SLUG } }),
     prisma.signal.count({
-      where: { source: MUNCHEYE_SLUG, launchId: { not: null } },
+      where: {
+        source: MUNCHEYE_SLUG,
+        OR: [{ launchId: { not: null } }, { enrichedAt: { not: null } }],
+      },
+    }),
+    prisma.signal.count({
+      where: {
+        source: MUNCHEYE_SLUG,
+        OR: [{ keyword: null }, { keyword: "" }],
+      },
     }),
   ]);
-  return { newLaunches, enriched };
+  return { newLaunches, enriched, missingKeywords };
 }
 
 export async function getMuncheyeCardStats(locale: string): Promise<MuncheyeCardStats> {
@@ -55,11 +69,12 @@ export async function getMuncheyeCardStats(locale: string): Promise<MuncheyeCard
     lastCollectAgo: formatRelativeTime(source?.lastRunAt, locale),
     newLaunches: counts.newLaunches,
     enriched: counts.enriched,
+    missingKeywords: counts.missingKeywords,
     autoDaily: active,
   };
 }
 
-export async function runMuncheyeCollection() {
+export async function runMuncheyeCollection(options?: { skipEnrich?: boolean }) {
   await ensureSources();
   const result = await collectMuncheye();
   let created = 0;
@@ -81,10 +96,26 @@ export async function runMuncheyeCollection() {
     }
   }
 
+  if (!options?.skipEnrich) {
+    await enrichPendingMuncheyeSignals(errors);
+  }
+
+  const stats = {
+    fetched: result.listed ?? result.items.length + result.errors.filter((item) =>
+      item.startsWith("sem domínio real:"),
+    ).length,
+    keywordMiss: 0,
+    noNiche: 0,
+    tooOld: 0,
+    apexMiss: 0,
+    kept: result.items.length,
+  };
+  logDropStats("muncheye", stats);
+
   const lastError =
     result.emptyReason && result.items.length === 0
       ? result.emptyReason
-      : (errors[0] ?? null);
+      : lastErrorIfEmpty("muncheye", stats);
   await heartbeat(lastError);
   const counts = await countMuncheyeSignals();
 
@@ -97,6 +128,73 @@ export async function runMuncheyeCollection() {
     collectedAt: new Date().toISOString(),
     ...counts,
   };
+}
+
+const MUNCHEYE_ENRICH_BATCH = 80;
+const MUNCHEYE_ENRICH_CONCURRENCY = 8;
+
+async function mapPool<T>(items: T[], concurrency: number, worker: (item: T) => Promise<void>) {
+  const queue = [...items];
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+      while (queue.length) {
+        const item = queue.shift();
+        if (item) {
+          await worker(item);
+        }
+      }
+    }),
+  );
+}
+
+export async function enrichPendingMuncheyeSignals(errors: string[] = []) {
+  const pending = await prisma.signal.findMany({
+    where: {
+      source: MUNCHEYE_SLUG,
+      enrichedAt: null,
+      domain: { not: null },
+      status: { in: ["NEW", "ENRICHING", "CANDIDATE"] },
+    },
+    orderBy: { discoveredAt: "desc" },
+    take: MUNCHEYE_ENRICH_BATCH,
+  });
+
+  await mapPool(pending, MUNCHEYE_ENRICH_CONCURRENCY, async (signal) => {
+    const domain = signal.domain;
+    if (!domain) {
+      return;
+    }
+    try {
+      await applyMuncheyeKeyword(signal);
+      await prisma.signal.update({
+        where: { id: signal.id },
+        data: { status: "ENRICHING" },
+      });
+      const probe = await probeLaunch(domain);
+      await persistHttpProbe(signal.id, probe);
+      const after = await prisma.signal.findUnique({
+        where: { id: signal.id },
+        select: { status: true },
+      });
+      if (after?.status === "NEW" || after?.status === "ENRICHING") {
+        await prisma.signal.update({
+          where: { id: signal.id },
+          data: { status: "CANDIDATE" },
+        });
+      }
+      console.log(`[muncheye] enriched ${domain} live=${probe.landing.live}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "probe failed";
+      console.error(`[muncheye] enrich failed ${domain}:`, message);
+      errors.push(`muncheye probe ${domain}: ${message}`);
+      await prisma.signal.update({
+        where: { id: signal.id },
+        data: { status: "NEW" },
+      }).catch(() => undefined);
+    }
+  });
+
+  return { attempted: pending.length, errors };
 }
 
 export async function setMuncheyeAutoDaily(enabled: boolean) {

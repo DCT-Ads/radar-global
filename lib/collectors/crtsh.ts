@@ -5,6 +5,7 @@ import {
   hostsFromNameValue,
   isCheckoutHost,
 } from "./domains";
+import { emptyDropStats, type CollectorDropStats } from "./drop-stats";
 
 export type CrtshEntry = {
   id: number;
@@ -74,7 +75,7 @@ export async function fetchCrtshEntries(keyword: string): Promise<CrtshEntry[]> 
 
       if (response.status === 502 || response.status === 503) {
         lastError = new Error(`crt.sh returned ${response.status}`);
-        await sleep(3_000 * (attempt + 1));
+        await sleep(2_000 * (attempt + 1));
         continue;
       }
 
@@ -93,7 +94,7 @@ export async function fetchCrtshEntries(keyword: string): Promise<CrtshEntry[]> 
       if (attempt === CRTSH_RETRIES - 1) {
         throw lastError;
       }
-      await sleep(3_000 * (attempt + 1));
+      await sleep(2_000 * (attempt + 1));
     }
   }
 
@@ -105,9 +106,11 @@ export function discoverDomainsFromEntries(
   keyword: string,
   maxAgeDays: number,
   limit: number,
-): DiscoveredDomain[] {
+): { domains: DiscoveredDomain[]; stats: CollectorDropStats } {
   const now = new Date();
   const grouped = new Map<string, DiscoveredDomain>();
+  const stats = emptyDropStats();
+  stats.fetched = entries.length;
 
   for (const entry of entries) {
     const issuedAt = new Date(entry.not_before);
@@ -117,11 +120,17 @@ export function discoverDomainsFromEntries(
 
     const hosts = hostsFromNameValue(entry.name_value, entry.common_name);
     for (const host of hosts) {
-      const domain = apexDomain(host);
-      if (!domainIncludesKeyword(domain, keyword)) {
+      const apex = apexDomain(host);
+      const hostHit = domainIncludesKeyword(host, keyword);
+      const apexHit = domainIncludesKeyword(apex, keyword);
+      if (!hostHit && !apexHit) {
+        stats.keywordMiss += 1;
         continue;
       }
-
+      if (hostHit && !apexHit) {
+        stats.apexMiss += 1;
+      }
+      const domain = apexHit ? apex : host;
       const current = grouped.get(domain);
       const checkout = isCheckoutHost(host);
       if (!current) {
@@ -148,8 +157,17 @@ export function discoverDomainsFromEntries(
     }
   }
 
-  return [...grouped.values()]
-    .filter((item) => item.ageDays >= 0 && item.ageDays < maxAgeDays)
+  const domains = [...grouped.values()]
+    .filter((item) => {
+      if (item.ageDays >= 0 && item.ageDays < maxAgeDays) {
+        return true;
+      }
+      stats.tooOld += 1;
+      return false;
+    })
     .sort((a, b) => a.ageDays - b.ageDays)
     .slice(0, limit);
+
+  stats.kept = domains.length;
+  return { domains, stats };
 }

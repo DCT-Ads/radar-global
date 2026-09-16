@@ -22,7 +22,7 @@ async function main() {
 
   assert.equal(persisted, 0);
   assert.ok(source?.lastRunAt, "whoisds lastRunAt must be set after collection");
-  assert.equal(source.lastError, null);
+  assert.equal(source.lastError, "whoisds fetched=0 keywordMiss=0 noNiche=0 tooOld=0 apexMiss=0 kept=0");
   assert.equal(source.status, "ACTIVE");
   assert.equal(errors.length, 0);
 

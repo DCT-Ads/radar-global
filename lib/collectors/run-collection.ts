@@ -1,5 +1,12 @@
 import { parseCrtshConfig } from "./config";
 import { discoverDomainsFromEntries, fetchCrtshEntries, type DiscoveredDomain } from "./crtsh";
+import {
+  addDropStats,
+  emptyDropStats,
+  lastErrorIfEmpty,
+  logDropStats,
+  type CollectorDropStats,
+} from "./drop-stats";
 import { markSource, withSourceHeartbeat } from "./heartbeat";
 import {
   fetchDigistore24Hits,
@@ -24,6 +31,9 @@ export type CollectionResult = {
   digistore24Discovered: number;
   youtubeDiscovered: number;
   errors: string[];
+  dropStats?: {
+    crtsh: CollectorDropStats;
+  };
 };
 
 function sleep(ms: number) {
@@ -37,7 +47,7 @@ export async function runNrdCollection(
   fetchHits: (input: {
     keywords?: string[];
     maxHits: number;
-  }) => Promise<{ hits: NrdHit[]; listDate: string }> = fetchNrdHits,
+  }) => Promise<{ hits: NrdHit[]; listDate: string; stats?: CollectorDropStats }> = fetchNrdHits,
 ) {
   await ensureSources();
   const nrd = await getSourceBySlug(SOURCE_SLUGS.nrd);
@@ -46,26 +56,37 @@ export async function runNrdCollection(
   }
 
   try {
-    return await withSourceHeartbeat(SOURCE_SLUGS.nrd, async () => {
-      const { hits } = await fetchHits({ keywords, maxHits });
-      let persisted = 0;
-      for (const hit of hits) {
-        const saved = await upsertNrdSignal(hit);
-        persisted += 1;
-        if (saved.signal.enrichedAt) {
-          continue;
+    let persisted = 0;
+    await withSourceHeartbeat(
+      SOURCE_SLUGS.nrd,
+      async () => {
+        const { hits, stats: incoming } = await fetchHits({ keywords, maxHits });
+        const stats = incoming ?? {
+          ...emptyDropStats(),
+          fetched: hits.length,
+          kept: hits.length,
+        };
+        logDropStats("whoisds", stats);
+        for (const hit of hits) {
+          const saved = await upsertNrdSignal(hit);
+          persisted += 1;
+          if (saved.signal.enrichedAt) {
+            continue;
+          }
+          try {
+            const probe = await probeLaunch(hit.domain);
+            await persistHttpProbe(saved.signal.id, probe);
+          } catch (error) {
+            errors.push(
+              `nrd probe ${hit.domain}: ${error instanceof Error ? error.message : "unknown error"}`,
+            );
+          }
         }
-        try {
-          const probe = await probeLaunch(hit.domain);
-          await persistHttpProbe(saved.signal.id, probe);
-        } catch (error) {
-          errors.push(
-            `nrd probe ${hit.domain}: ${error instanceof Error ? error.message : "unknown error"}`,
-          );
-        }
-      }
-      return persisted;
-    });
+        return { persisted, stats };
+      },
+      (result) => lastErrorIfEmpty("whoisds", result.stats),
+    );
+    return persisted;
   } catch (error) {
     const message = error instanceof Error ? error.message : "NRD collection failed";
     errors.push(`whoisds: ${message}`);
@@ -86,15 +107,21 @@ export async function runDigistore24Collection(
   }
 
   try {
-    return await withSourceHeartbeat(SOURCE_SLUGS.digistore24, async () => {
-      const { hits } = await fetchDigistore24Hits({ keywords, maxHits, fetchFn });
-      let persisted = 0;
-      for (const hit of hits) {
-        await upsertDigistore24Signal(hit);
-        persisted += 1;
-      }
-      return persisted;
-    });
+    let persisted = 0;
+    await withSourceHeartbeat(
+      SOURCE_SLUGS.digistore24,
+      async () => {
+        const { hits, stats } = await fetchDigistore24Hits({ keywords, maxHits, fetchFn });
+        logDropStats("digistore24", stats);
+        for (const hit of hits) {
+          await upsertDigistore24Signal(hit);
+          persisted += 1;
+        }
+        return { persisted, stats };
+      },
+      (result) => lastErrorIfEmpty("digistore24", result.stats),
+    );
+    return persisted;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Digistore24 collection failed";
     errors.push(`digistore24: ${message}`);
@@ -120,15 +147,21 @@ export async function runYoutubeCollection(
   }
 
   try {
-    return await withSourceHeartbeat(SOURCE_SLUGS.youtube, async () => {
-      const { hits } = await fetchYoutubeHits({ keywords, maxHits, fetchFn });
-      let persisted = 0;
-      for (const hit of hits) {
-        await upsertYoutubeSignal(hit);
-        persisted += 1;
-      }
-      return persisted;
-    });
+    let persisted = 0;
+    await withSourceHeartbeat(
+      SOURCE_SLUGS.youtube,
+      async () => {
+        const { hits, stats } = await fetchYoutubeHits({ keywords, maxHits, fetchFn });
+        logDropStats("youtube", stats);
+        for (const hit of hits) {
+          await upsertYoutubeSignal(hit);
+          persisted += 1;
+        }
+        return { persisted, stats };
+      },
+      (result) => lastErrorIfEmpty("youtube", result.stats),
+    );
+    return persisted;
   } catch (error) {
     const message = error instanceof Error ? error.message : "YouTube collection failed";
     errors.push(`youtube: ${message}`);
@@ -139,7 +172,7 @@ export async function runYoutubeCollection(
 export async function runCrtshCollection(): Promise<CollectionResult> {
   await ensureSources();
   const crtsh = await getSourceBySlug(SOURCE_SLUGS.crtsh);
-  const httpProbe = await getSourceBySlug(SOURCE_SLUGS.httpProbe);
+  await getSourceBySlug(SOURCE_SLUGS.httpProbe);
 
   const config = parseCrtshConfig(crtsh.config);
   if (crtsh.lastError?.includes("YOUTUBE_API_KEY")) {
@@ -161,6 +194,7 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
   const seen = new Set<string>();
   const discovered: DiscoveredDomain[] = [];
   const errors: string[] = [];
+  const crtshStats = emptyDropStats();
   const nrdDiscovered = await runNrdCollection(config.keywords, config.maxDomainsPerRun, errors);
   const digistore24Discovered = await runDigistore24Collection(
     config.keywords,
@@ -189,12 +223,13 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
     for (const keyword of config.keywords) {
       try {
         const entries = await fetchCrtshEntries(keyword);
-        const domains = discoverDomainsFromEntries(
+        const { domains, stats } = discoverDomainsFromEntries(
           entries,
           keyword,
           config.maxAgeDays,
           config.maxDomainsPerKeyword,
         );
+        addDropStats(crtshStats, stats);
         for (const item of domains) {
           if (seen.has(item.domain) || discovered.length >= config.maxDomainsPerRun) {
             continue;
@@ -209,6 +244,9 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
       }
       await sleep(KEYWORD_GAP_MS);
     }
+
+    crtshStats.kept = discovered.length;
+    logDropStats("crt.sh", crtshStats);
 
     let probed = 0;
     for (const item of discovered) {
@@ -230,10 +268,11 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
     const crtshErrors = errors.filter(
       (item) => item.startsWith("crt.sh") || item.startsWith("probe "),
     );
+    const emptyStats = lastErrorIfEmpty("crt.sh", crtshStats);
     await markSource(
       SOURCE_SLUGS.crtsh,
       crtshErrors.length && !discovered.length ? "ERROR" : "ACTIVE",
-      crtshErrors[0] ?? null,
+      crtshErrors[0] ?? emptyStats,
     );
     await markSource(
       SOURCE_SLUGS.httpProbe,
@@ -249,6 +288,9 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
       digistore24Discovered,
       youtubeDiscovered,
       errors,
+      dropStats: {
+        crtsh: crtshStats,
+      },
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Collection failed";

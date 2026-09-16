@@ -1,6 +1,7 @@
 import { inflateRawSync, gunzipSync } from "node:zlib";
 import { ALL_KEYWORDS, nicheForKeyword } from "@/lib/niches";
 import { cleanHost, domainIncludesKeyword } from "./domains";
+import { emptyDropStats, type CollectorDropStats } from "./drop-stats";
 
 export const NRD_SOURCE = "whoisds";
 
@@ -8,8 +9,9 @@ export type NrdHit = {
   domain: string;
   keyword: string;
   niche: string;
-  registeredAt: Date;
   listDate: string;
+  /** WHOIS/RDAP Creation Date only. Never the WhoisDS list day. */
+  registeredAt?: Date | null;
 };
 
 function utcDate(daysAgo: number): Date {
@@ -101,7 +103,7 @@ export async function fetchNrdHits(input: {
   keywords?: string[];
   maxHits: number;
   lookbackDays?: number;
-}): Promise<{ hits: NrdHit[]; listDate: string }> {
+}): Promise<{ hits: NrdHit[]; listDate: string; stats: CollectorDropStats }> {
   const keywords = (input.keywords ?? ALL_KEYWORDS).map((item) => item.toLowerCase());
   const lookback = input.lookbackDays ?? 3;
   let lastError: Error | null = null;
@@ -113,17 +115,22 @@ export async function fetchNrdHits(input: {
       const text = await downloadWhoisdsList(listDate);
       const hits: NrdHit[] = [];
       const seen = new Set<string>();
-      for (const line of text.split(/\r?\n/)) {
+      const stats = emptyDropStats();
+      const lines = text.split(/\r?\n/);
+      stats.fetched = lines.filter((line) => line.trim()).length;
+      for (const line of lines) {
         const host = cleanHost(line);
         if (!host || seen.has(host)) {
           continue;
         }
         const keyword = matchKeyword(host, keywords);
         if (!keyword) {
+          stats.keywordMiss += 1;
           continue;
         }
         const niche = nicheForKeyword(keyword);
         if (!niche) {
+          stats.noNiche += 1;
           continue;
         }
         seen.add(host);
@@ -131,14 +138,15 @@ export async function fetchNrdHits(input: {
           domain: host,
           keyword,
           niche,
-          registeredAt: listDay,
           listDate,
+          registeredAt: null,
         });
         if (hits.length >= input.maxHits) {
           break;
         }
       }
-      return { hits, listDate };
+      stats.kept = hits.length;
+      return { hits, listDate, stats };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("WhoisDS failed");
     }

@@ -66,7 +66,7 @@ export function parseMuncheyeItems(html: string, scrapedAt: string): Marketplace
     const launchDate =
       node.find("meta[itemprop='releaseDate']").attr("content")?.trim() || null;
 
-    const inferred = keywordFromText(`${product} ${vendor ?? ""} ${linkText}`);
+    const inferred = keywordFromText(product, vendor);
     items.push({
       source: "muncheye",
       product_name: product,
@@ -179,6 +179,7 @@ export async function collectMuncheye(): Promise<MarketplaceCollectResult> {
     return {
       source: "muncheye",
       items,
+      listed: listed.length,
       errors,
       httpStatus,
       finalUrl,
