@@ -8,6 +8,7 @@ export const SOURCE_SLUGS = {
   nrd: "whoisds",
   digistore24: "digistore24",
   youtube: "youtube",
+  muncheye: "muncheye",
 } as const;
 
 const SOURCE_SEED: Array<{
@@ -44,6 +45,12 @@ const SOURCE_SEED: Array<{
     slug: SOURCE_SLUGS.youtube,
     name: "YouTube Data API mostPopular",
     reliability: 80,
+    config: undefined,
+  },
+  {
+    slug: SOURCE_SLUGS.muncheye,
+    name: "MunchEye marketplace",
+    reliability: 70,
     config: undefined,
   },
 ];

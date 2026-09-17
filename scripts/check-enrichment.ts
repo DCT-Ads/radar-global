@@ -45,13 +45,16 @@ async function main() {
   });
   for (const signal of latest) {
     const level = getSaturationLevel({
-      keywordVolume: signal.keyword ? (byKeyword[signal.keyword] ?? 1) : 1,
+      keyword: signal.keyword,
+      keywordVolume: signal.keyword ? (byKeyword[signal.keyword] ?? 1) : 0,
       medianVolume: median,
       p75Volume: p75,
       confidence: signal.confidence,
       firstSeenDaysAgo: ageInDays(signal.discoveredAt),
     });
-    levels[level] += 1;
+    if (level) {
+      levels[level] += 1;
+    }
   }
 
   console.log(

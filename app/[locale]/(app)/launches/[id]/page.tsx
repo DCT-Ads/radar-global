@@ -72,6 +72,7 @@ export default async function LaunchPage({ params }: LaunchPageProps) {
                 moderate: t("satWarning"),
                 hot: t("satSafe"),
                 upcomingLaunch: t("upcoming"),
+                unknown: t("satUnknown"),
               }}
             />
           </div>

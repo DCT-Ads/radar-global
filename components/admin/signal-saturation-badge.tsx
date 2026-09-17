@@ -25,6 +25,7 @@ type SignalSaturationBadgeProps = {
     saturationSaturated: string;
     saturationWarning: string;
     saturationSafe: string;
+    saturationUnknown?: string;
     upcomingLaunch: string;
   };
 };
@@ -35,6 +36,20 @@ export function SignalSaturationBadge({
   labels,
 }: SignalSaturationBadgeProps) {
   const saturation = getSaturationLevel(inputs);
+  if (!saturation) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">
+          {labels.saturationUnknown ?? "—"}
+        </span>
+        {upcoming ? (
+          <span className="rounded-full bg-blue-600 px-3 py-1 text-sm font-bold text-white animate-pulse">
+            {labels.upcomingLaunch}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
   const config = SATURATION_UI[saturation];
 
   return (

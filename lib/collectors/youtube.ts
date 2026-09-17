@@ -1,7 +1,12 @@
-import { ALL_KEYWORDS, nicheForKeyword } from "@/lib/niches";
+import { ALL_KEYWORDS, matchesKeywordWord, nicheForKeyword } from "@/lib/niches";
+import {
+  addDropStats,
+  emptyDropStats,
+  type CollectorDropStats,
+} from "./drop-stats";
 
 export const YOUTUBE_SOURCE = "youtube";
-export const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3/videos";
+export const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 export const YOUTUBE_REGION = "BR";
 
 export type YoutubeHit = {
@@ -17,6 +22,7 @@ export type YoutubeHit = {
 export type YoutubeFetchFn = (input: {
   url: string;
   apiKey: string;
+  keyword: string;
 }) => Promise<unknown>;
 
 type RawEntry = Record<string, unknown>;
@@ -35,7 +41,12 @@ function asString(value: unknown): string | null {
 }
 
 function videoId(item: RawEntry): string | null {
-  return asString(item.id);
+  const direct = asString(item.id);
+  if (direct) {
+    return direct;
+  }
+  const nested = asRecord(item.id);
+  return nested ? asString(nested.videoId) : null;
 }
 
 function snippetOf(item: RawEntry): RawEntry {
@@ -59,7 +70,7 @@ function haystack(item: RawEntry): string {
 
 function matchKeyword(text: string, keywords: string[]): string | null {
   for (const keyword of keywords) {
-    if (text.includes(keyword)) {
+    if (matchesKeywordWord(text, keyword)) {
       return keyword;
     }
   }
@@ -90,38 +101,50 @@ function extractItems(payload: unknown): RawEntry[] {
   return root.items.filter((item): item is RawEntry => Boolean(asRecord(item)));
 }
 
-export function youtubeListUrl(apiKey: string, maxResults = 50): string {
+export function youtubeSearchUrl(apiKey: string, keyword: string, maxResults = 25): string {
   const params = new URLSearchParams({
     part: "snippet",
-    chart: "mostPopular",
-    regionCode: YOUTUBE_REGION,
+    q: keyword,
+    type: "video",
+    order: "date",
     maxResults: String(Math.min(50, Math.max(1, maxResults))),
     key: apiKey,
   });
-  return `${YOUTUBE_API_BASE}?${params.toString()}`;
+  return `${YOUTUBE_SEARCH_URL}?${params.toString()}`;
 }
 
 export function parseYoutubeHits(
   payload: unknown,
   keywords: string[],
   maxHits: number,
-): YoutubeHit[] {
+  queryKeyword?: string,
+): { hits: YoutubeHit[]; stats: CollectorDropStats } {
   const needles = keywords.map((item) => item.toLowerCase());
   const hits: YoutubeHit[] = [];
   const seen = new Set<string>();
   const now = new Date();
+  const stats = emptyDropStats();
+  const items = extractItems(payload);
+  stats.fetched = items.length;
 
-  for (const item of extractItems(payload)) {
+  for (const item of items) {
     const id = videoId(item);
     if (!id || seen.has(id)) {
       continue;
     }
-    const keyword = matchKeyword(haystack(item), needles);
+    const fromQuery = queryKeyword?.trim().toLowerCase();
+    const text = haystack(item);
+    const keyword =
+      fromQuery && matchesKeywordWord(text, fromQuery)
+        ? fromQuery
+        : matchKeyword(text, needles);
     if (!keyword) {
+      stats.keywordMiss += 1;
       continue;
     }
     const niche = nicheForKeyword(keyword);
     if (!niche) {
+      stats.noNiche += 1;
       continue;
     }
     const snippet = snippetOf(item);
@@ -139,7 +162,8 @@ export function parseYoutubeHits(
       break;
     }
   }
-  return hits;
+  stats.kept = hits.length;
+  return { hits, stats };
 }
 
 async function defaultFetch(input: { url: string; apiKey: string }): Promise<unknown> {
@@ -158,18 +182,43 @@ export async function fetchYoutubeHits(input: {
   keywords?: string[];
   maxHits: number;
   fetchFn?: YoutubeFetchFn;
-}): Promise<{ hits: YoutubeHit[] }> {
+}): Promise<{ hits: YoutubeHit[]; stats: CollectorDropStats }> {
   const apiKey = process.env.YOUTUBE_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("YOUTUBE_API_KEY is missing");
   }
 
-  const payload = await (input.fetchFn ?? defaultFetch)({
-    url: youtubeListUrl(apiKey),
-    apiKey,
-  });
+  const keywords = input.keywords ?? ALL_KEYWORDS;
+  const hits: YoutubeHit[] = [];
+  const seen = new Set<string>();
+  const stats = emptyDropStats();
+  const fetchFn = input.fetchFn ?? defaultFetch;
 
-  return {
-    hits: parseYoutubeHits(payload, input.keywords ?? ALL_KEYWORDS, input.maxHits),
-  };
+  for (const keyword of keywords) {
+    if (hits.length >= input.maxHits) {
+      break;
+    }
+    const payload = await fetchFn({
+      url: youtubeSearchUrl(apiKey, keyword, input.maxHits),
+      apiKey,
+      keyword,
+    });
+    const parsed = parseYoutubeHits(
+      payload,
+      [keyword],
+      input.maxHits - hits.length,
+      keyword,
+    );
+    addDropStats(stats, parsed.stats);
+    for (const hit of parsed.hits) {
+      if (seen.has(hit.videoId)) {
+        continue;
+      }
+      seen.add(hit.videoId);
+      hits.push(hit);
+    }
+  }
+
+  stats.kept = hits.length;
+  return { hits, stats };
 }

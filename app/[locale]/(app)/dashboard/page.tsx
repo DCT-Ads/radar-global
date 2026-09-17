@@ -35,6 +35,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     moderate: t("satModerate"),
     saturated: t("satSaturated"),
     upcomingLaunch: t("kpiUpcoming"),
+    unknown: t("satUnknown"),
   };
 
   return (

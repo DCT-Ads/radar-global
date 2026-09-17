@@ -8,7 +8,293 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ───────────────────────────────────────────────
+model User {
+  id                  String        @id @default(cuid())
+  email               String        @unique
+  passwordHash        String
+  name                String
+  role                Role          @default(USER)
+  plan                AccessPlan    @default(STANDARD)
+  locale              String        @default("en")
+  niche               String?
+  minCommissionPct    Decimal?      @db.Decimal(5, 2)
+  onboardingCompleted Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  alerts              Alert[]
+  auditLogs           AuditLog[]
+  favorites           Favorite[]
+  searches            Search[]
+  subscription        Subscription?
+  countries           Country[]     @relation("CountryToUser")
+}
+
+model Country {
+  id        String     @id @default(cuid())
+  iso2      String     @unique @db.Char(2)
+  iso3      String     @unique @db.Char(3)
+  name      String
+  namePt    String
+  nameEs    String
+  currency  String     @db.Char(3)
+  isActive  Boolean    @default(true)
+  launches  Launch[]
+  producers Producer[]
+  users     User[]     @relation("CountryToUser")
+}
+
+model Plan {
+  id                    String         @id @default(cuid())
+  slug                  PlanSlug       @unique
+  name                  String
+  priceCents            Int
+  currency              String         @default("USD") @db.Char(3)
+  dailyOpportunityLimit Int
+  countryLimit          Int
+  historyDays           Int
+  unlockCommission      Boolean
+  alertsEnabled         Boolean
+  alertsUnlimited       Boolean
+  earlySignalEnabled    Boolean
+  stripePriceId         String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  subscriptions         Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+}
+
+model Producer {
+  id           String     @id @default(cuid())
+  name         String
+  domain       String     @unique
+  website      String?
+  email        String?
+  instagram    String?
+  youtube      String?
+  facebook     String?
+  linkedin     String?
+  x            String?
+  companyName  String?
+  contactScore Int?
+  enrichedAt   DateTime?
+  countryId    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  evidences    Evidence[]
+  launches     Launch[]
+  country      Country?   @relation(fields: [countryId], references: [id])
+  signals      Signal[]
+}
+
+model Launch {
+  id           String       @id @default(cuid())
+  producerId   String
+  countryId    String?
+  title        String
+  slug         String       @unique
+  domain       String       @unique
+  niche        String?
+  description  String?
+  status       LaunchStatus @default(DISCOVERY) @map("lifecycle")
+  landingLive  Boolean?
+  hasCheckout  Boolean?
+  hasGoPath    Boolean?
+  hasPayPath   Boolean?
+  lastProbedAt DateTime?
+  firstSeenAt  DateTime     @default(now())
+  lastSeenAt   DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  alerts       Alert[]
+  commissions  Commission[]
+  evidences    Evidence[]
+  favorites    Favorite[]
+  country      Country?     @relation(fields: [countryId], references: [id])
+  producer     Producer     @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  scores       Score[]
+  signals      Signal[]
+
+  @@index([producerId])
+  @@index([status])
+  @@index([niche])
+}
+
+/// Histórico versionado — nunca update; sempre insert.
+model Score {
+  id              String     @id @default(cuid())
+  launchId        String
+  hype            Float
+  opportunity     Float
+  trend           Float
+  competition     Float
+  earlySignal     Float
+  dataQuality     Float
+  confidence      Confidence
+  weightsSnapshot Json?
+  computedAt      DateTime   @default(now())
+  launch          Launch     @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  @@index([launchId, computedAt])
+}
+
+model Source {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  reliability Int
+  status      SourceStatus @default(ACTIVE)
+  lastRunAt   DateTime?
+  lastError   String?
+  config      Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  commissions Commission[]
+  evidences   Evidence[]
+}
+
+model Signal {
+  id           String       @id @default(cuid())
+  type         SignalType
+  source       String
+  value        String
+  rawData      Json?
+  domain       String?
+  url          String?
+  keyword      String?
+  niche        String?
+  countryHint  String?
+  langHint     String?
+  confidence   Int          @default(0)
+  status       SignalStatus @default(NEW)
+  producerId   String?
+  launchId     String?
+  discoveredAt DateTime     @default(now())
+  verifiedAt   DateTime?
+  enrichedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  evidences    Evidence[]
+  launch       Launch?      @relation(fields: [launchId], references: [id])
+  producer     Producer?    @relation(fields: [producerId], references: [id])
+
+  @@unique([source, value])
+  @@index([type])
+  @@index([status])
+  @@index([niche])
+  @@index([countryHint])
+}
+
+/// Obrigatória para exibir qualquer dado de Launch/Producer.
+/// App exige launchId OU producerId (não há check no banco).
+model Evidence {
+  id         String       @id @default(cuid())
+  launchId   String?
+  producerId String?
+  sourceId   String
+  signalId   String?
+  type       EvidenceType
+  url        String
+  title      String?
+  snippet    String?
+  raw        Json?
+  confidence Int          @default(0)
+  capturedAt DateTime     @default(now())
+  launch     Launch?      @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  producer   Producer?    @relation(fields: [producerId], references: [id])
+  signal     Signal?      @relation(fields: [signalId], references: [id])
+  source     Source       @relation(fields: [sourceId], references: [id])
+
+  @@index([launchId, capturedAt])
+  @@index([producerId])
+  @@index([sourceId])
+}
+
+model Commission {
+  id            String      @id @default(cuid())
+  launchId      String
+  sourceId      String?
+  marketplace   Marketplace
+  gravity       Float?
+  commissionPct Decimal?    @db.Decimal(5, 2)
+  amountCents   Int?
+  currency      String      @default("USD") @db.Char(3)
+  affiliateUrl  String?
+  capturedAt    DateTime    @default(now())
+  launch        Launch      @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  source        Source?     @relation(fields: [sourceId], references: [id])
+
+  @@index([launchId, capturedAt])
+}
+
+model Alert {
+  id              String    @id @default(cuid())
+  userId          String
+  launchId        String?
+  type            AlertType
+  threshold       Float?
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  launch          Launch?   @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  launchId  String
+  createdAt DateTime @default(now())
+  launch    Launch   @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, launchId])
+}
+
+model Search {
+  id        String   @id @default(cuid())
+  userId    String?
+  query     String
+  filters   Json?
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
 
 enum Role {
   USER
@@ -60,6 +346,13 @@ enum PlanSlug {
 enum Marketplace {
   CLICKBANK
   DIGISTORE
+  HOTMART
+  EDUZZ
+  JVZOO
+  MONETIZZE
+  BRAIP
+  KIWIFY
+  BUYGOODS
   OTHER
 }
 
@@ -95,310 +388,4 @@ enum AlertType {
   EARLY_SIGNAL
   LIFECYCLE_CHANGE
   NEW_LAUNCH
-}
-
-// ─── Auth / billing ──────────────────────────────────────
-
-model User {
-  id                  String   @id @default(cuid())
-  email               String   @unique
-  passwordHash        String
-  name                String
-  role                Role     @default(USER)
-  plan                AccessPlan @default(STANDARD)
-  locale              String   @default("en")
-  niche               String?
-  minCommissionPct    Decimal? @db.Decimal(5, 2)
-  onboardingCompleted Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  countries    Country[]
-  subscription Subscription?
-  favorites    Favorite[]
-  alerts       Alert[]
-  searches     Search[]
-  auditLogs    AuditLog[]
-}
-
-model Country {
-  id       String  @id @default(cuid())
-  iso2     String  @unique @db.Char(2)
-  iso3     String  @unique @db.Char(3)
-  name     String
-  namePt   String
-  nameEs   String
-  currency String  @db.Char(3)
-  isActive Boolean @default(true)
-
-  users     User[]
-  producers Producer[]
-  launches  Launch[]
-}
-
-model Plan {
-  id                    String   @id @default(cuid())
-  slug                  PlanSlug @unique
-  name                  String
-  priceCents            Int
-  currency              String   @default("USD") @db.Char(3)
-  dailyOpportunityLimit Int
-  countryLimit          Int
-  historyDays           Int
-  unlockCommission      Boolean
-  alertsEnabled         Boolean
-  alertsUnlimited       Boolean
-  earlySignalEnabled    Boolean
-  stripePriceId         String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id                   String             @id @default(cuid())
-  userId               String             @unique
-  planId               String
-  status               SubscriptionStatus @default(ACTIVE)
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan Plan @relation(fields: [planId], references: [id])
-
-  @@index([planId])
-}
-
-// ─── Radar core ──────────────────────────────────────────
-
-model Producer {
-  id           String    @id @default(cuid())
-  name         String
-  domain       String    @unique
-  website      String?
-  email        String?
-  instagram    String?
-  youtube      String?
-  facebook     String?
-  linkedin     String?
-  x            String?
-  companyName  String?
-  contactScore Int?
-  enrichedAt   DateTime?
-  countryId    String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  country   Country?   @relation(fields: [countryId], references: [id])
-  launches  Launch[]
-  signals   Signal[]
-  evidences Evidence[]
-}
-
-model Launch {
-  id           String    @id @default(cuid())
-  producerId   String
-  countryId    String?
-  title        String
-  slug         String    @unique
-  domain       String    @unique
-  niche        String?
-  description  String?
-  status       LaunchStatus @default(DISCOVERY) @map("lifecycle")
-  landingLive  Boolean?
-  hasCheckout  Boolean?
-  hasGoPath    Boolean?
-  hasPayPath   Boolean?
-  lastProbedAt DateTime?
-  firstSeenAt  DateTime  @default(now())
-  lastSeenAt   DateTime  @default(now())
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  producer    Producer     @relation(fields: [producerId], references: [id], onDelete: Cascade)
-  country     Country?     @relation(fields: [countryId], references: [id])
-  scores      Score[]
-  evidences   Evidence[]
-  signals     Signal[]
-  commissions Commission[]
-  favorites   Favorite[]
-  alerts      Alert[]
-
-  @@index([producerId])
-  @@index([status])
-  @@index([niche])
-}
-
-/// Histórico versionado — nunca update; sempre insert.
-model Score {
-  id              String     @id @default(cuid())
-  launchId        String
-  hype            Float
-  opportunity     Float
-  trend           Float
-  competition     Float
-  earlySignal     Float
-  dataQuality     Float
-  confidence      Confidence
-  weightsSnapshot Json?
-  computedAt      DateTime   @default(now())
-
-  launch Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
-
-  @@index([launchId, computedAt])
-}
-
-model Source {
-  id          String       @id @default(cuid())
-  slug        String       @unique
-  name        String
-  reliability Int
-  status      SourceStatus @default(ACTIVE)
-  lastRunAt   DateTime?
-  lastError   String?
-  config      Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  evidences   Evidence[]
-  commissions Commission[]
-}
-
-model Signal {
-  id           String       @id @default(cuid())
-  type         SignalType
-  source       String
-  value        String
-  rawData      Json?
-  domain       String?
-  url          String?
-  keyword      String?
-  niche        String?
-  countryHint  String?
-  langHint     String?
-  confidence   Int          @default(0)
-  status       SignalStatus @default(NEW)
-  producerId   String?
-  launchId     String?
-  discoveredAt DateTime     @default(now())
-  verifiedAt   DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  producer  Producer?  @relation(fields: [producerId], references: [id], onDelete: SetNull)
-  launch    Launch?    @relation(fields: [launchId], references: [id], onDelete: SetNull)
-  evidences Evidence[]
-
-  @@unique([source, value])
-  @@index([type])
-  @@index([status])
-  @@index([niche])
-  @@index([countryHint])
-}
-
-/// Obrigatória para exibir qualquer dado de Launch/Producer.
-/// App exige launchId OU producerId (não há check no banco).
-model Evidence {
-  id         String       @id @default(cuid())
-  launchId   String?
-  producerId String?
-  sourceId   String
-  signalId   String?
-  type       EvidenceType
-  url        String
-  title      String?
-  snippet    String?
-  raw        Json?
-  confidence Int          @default(0)
-  capturedAt DateTime     @default(now())
-
-  launch   Launch?  @relation(fields: [launchId], references: [id], onDelete: Cascade)
-  producer Producer? @relation(fields: [producerId], references: [id], onDelete: SetNull)
-  source   Source   @relation(fields: [sourceId], references: [id])
-  signal   Signal?  @relation(fields: [signalId], references: [id])
-
-  @@index([launchId, capturedAt])
-  @@index([producerId])
-  @@index([sourceId])
-}
-
-model Commission {
-  id            String      @id @default(cuid())
-  launchId      String
-  sourceId      String?
-  marketplace   Marketplace
-  gravity       Float?
-  commissionPct Decimal?    @db.Decimal(5, 2)
-  amountCents   Int?
-  currency      String      @default("USD") @db.Char(3)
-  affiliateUrl  String?
-  capturedAt    DateTime    @default(now())
-
-  launch Launch  @relation(fields: [launchId], references: [id], onDelete: Cascade)
-  source Source? @relation(fields: [sourceId], references: [id])
-
-  @@index([launchId, capturedAt])
-}
-
-model Alert {
-  id              String    @id @default(cuid())
-  userId          String
-  launchId        String?
-  type            AlertType
-  threshold       Float?
-  isActive        Boolean   @default(true)
-  lastTriggeredAt DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  launch Launch? @relation(fields: [launchId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model Favorite {
-  id        String   @id @default(cuid())
-  userId    String
-  launchId  String
-  createdAt DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  launch Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, launchId])
-}
-
-model Search {
-  id        String   @id @default(cuid())
-  userId    String?
-  query     String
-  filters   Json?
-  locale    String   @default("en")
-  createdAt DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([userId, createdAt])
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  action    String
-  entity    String
-  entityId  String?
-  metadata  Json?
-  ip        String?
-  createdAt DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([entity, entityId])
-  @@index([createdAt])
 }

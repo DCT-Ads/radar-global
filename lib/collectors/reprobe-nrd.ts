@@ -137,8 +137,9 @@ export async function runPendingNrdReprobe(
     where: {
       source: { in: [...PROMOTE_SOURCES] },
       status: { in: REVIEWABLE },
+      rawData: { path: ["launchPending"], equals: true },
       ...(options.alreadyLive
-        ? { rawData: { path: ["httpProbe", "landing", "live"], equals: true } }
+        ? { AND: [{ rawData: { path: ["httpProbe", "landing", "live"], equals: true } }] }
         : {}),
     },
     orderBy: { updatedAt: "asc" },

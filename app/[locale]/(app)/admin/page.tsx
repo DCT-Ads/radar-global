@@ -9,6 +9,7 @@ import {
   SaturationLegend,
   type SaturationFilter,
 } from "@/components/admin/saturation-legend";
+import { ConfidenceCell } from "@/components/admin/confidence-cell";
 import { SignalReviewActions } from "@/components/admin/signal-review-actions";
 import { SignalTableSaturation } from "@/components/admin/signal-table-saturation";
 import { Link } from "@/i18n/navigation";
@@ -19,12 +20,20 @@ import {
   indexKeywordVolumes,
   isUpcomingLaunch,
   landingLiveFromRaw,
-  registeredAtFromRaw,
 } from "@/lib/signals/saturation";
-import { NRD_SOURCE } from "@/lib/collectors/nrd";
 import { ageInDays } from "@/lib/collectors/domains";
 import { getReprobeHealth } from "@/lib/collectors/reprobe-nrd";
 import { formatRelativeTime } from "@/lib/format/relative-time";
+import {
+  effectiveDiscoveredAt,
+  trustedRegisteredAtFromRaw,
+} from "@/lib/signals/whois-registered-at";
+import {
+  countReviewBySource,
+  fetchReviewSignals,
+  isReviewSource,
+  REVIEW_SOURCES,
+} from "@/lib/admin/review-signals";
 import { ensureSources, SOURCE_SLUGS } from "@/lib/sources";
 import { cn } from "@/lib/utils";
 
@@ -38,9 +47,12 @@ const SIGNAL_STATUSES: SignalStatus[] = [
 
 const REVIEWABLE: SignalStatus[] = ["NEW", "ENRICHING", "CANDIDATE"];
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type AdminPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ tab?: string; status?: string; sat?: string }>;
+  searchParams: Promise<{ tab?: string; status?: string; sat?: string; source?: string; page?: string }>;
 };
 
 function statusVariant(status: SourceStatus) {
@@ -71,34 +83,62 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
   const tab = query.tab === "collectors" ? "collectors" : "review";
   const status = isSignalStatus(query.status) ? query.status : "NEW";
   const sat = isSatFilter(query.sat) ? query.sat : undefined;
+  const sourceFilter = isReviewSource(query.source) ? query.source : undefined;
+  const page = Math.max(0, Number.parseInt(query.page ?? "0", 10) || 0);
 
-  const [sources, counts, fetched, keywordCounts, reprobeHealth] = await Promise.all([
+  const reviewQuery = (next: {
+    status?: string;
+    sat?: string;
+    source?: string;
+    page?: number;
+  }) => {
+    const params = new URLSearchParams();
+    params.set("tab", "review");
+    params.set("status", next.status ?? status);
+    const nextSat = next.sat === "" ? undefined : (next.sat ?? sat);
+    if (nextSat) {
+      params.set("sat", nextSat);
+    }
+    const nextSource =
+      next.source === "" ? undefined : (next.source ?? sourceFilter);
+    if (nextSource) {
+      params.set("source", nextSource);
+    }
+    const nextPage = next.page ?? 0;
+    if (nextPage > 0) {
+      params.set("page", String(nextPage));
+    }
+    return `/admin?${params.toString()}`;
+  };
+
+  const [sources, counts, reviewPage, sourceCounts, keywordCounts, reprobeHealth] =
+    await Promise.all([
     prisma.source.findMany({ orderBy: { name: "asc" } }),
     prisma.signal.groupBy({
       by: ["status"],
       _count: { _all: true },
     }),
-    prisma.signal.findMany({
-      where:
-            sat === "UPCOMING"
-          ? { status, source: NRD_SOURCE }
-          : { status },
-      orderBy: { discoveredAt: "desc" },
-      take: sat ? 400 : 100,
-      include: { launch: { select: { status: true } } },
+    fetchReviewSignals({
+      status,
+      source: sourceFilter,
+      upcomingOnly: sat === "UPCOMING",
+      page,
     }),
+    countReviewBySource(status),
     prisma.signal.groupBy({
       by: ["keyword"],
       _count: { _all: true },
     }),
     getReprobeHealth(),
   ]);
+  const fetched = reviewPage.rows;
 
   const { byKeyword, median, p75 } = indexKeywordVolumes(keywordCounts);
 
   const withLevel = fetched.map((signal) => {
     const level = getSaturationLevel({
-      keywordVolume: signal.keyword ? (byKeyword[signal.keyword] ?? 1) : 1,
+      keyword: signal.keyword,
+      keywordVolume: signal.keyword ? (byKeyword[signal.keyword] ?? 1) : 0,
       medianVolume: median,
       p75Volume: p75,
       confidence: signal.confidence,
@@ -114,9 +154,11 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
   const rows =
     sat === "UPCOMING"
       ? withLevel.filter((row) => row.upcoming)
-      : sat
-        ? withLevel.filter((row) => row.level === sat)
-        : withLevel;
+      : sat === "UNKNOWN"
+        ? withLevel.filter((row) => row.level === null)
+        : sat
+          ? withLevel.filter((row) => row.level === sat)
+          : withLevel;
 
   const countByStatus = Object.fromEntries(
     SIGNAL_STATUSES.map((item) => [
@@ -134,7 +176,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
 
       <AdminTabs
         active={tab}
-        reviewHref={`/admin?tab=review&status=${status}`}
+        reviewHref={reviewQuery({})}
       />
 
       {reprobeHealth.stale ? (
@@ -154,14 +196,13 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
             <SaturationLegend
               activeKey={sat}
               hrefFor={(key) =>
-                sat === key
-                  ? `/admin?tab=review&status=${status}`
-                  : `/admin?tab=review&status=${status}&sat=${key}`
+                reviewQuery({ sat: sat === key ? "" : key, page: 0 })
               }
               labels={{
                 saturationSaturated: t("saturationSaturated"),
                 saturationWarning: t("saturationWarning"),
                 saturationSafe: t("saturationSafe"),
+                saturationUnknown: t("saturationUnknown"),
                 upcomingLaunch: t("upcomingLaunch"),
               }}
             />
@@ -169,7 +210,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
               {SIGNAL_STATUSES.map((item) => (
                 <Link
                   key={item}
-                  href={`/admin?tab=review&status=${item}`}
+                  href={reviewQuery({ status: item, page: 0 })}
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-xs",
                     status === item
@@ -181,11 +222,40 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                 </Link>
               ))}
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t("colSource")}</span>
+              <Link
+                href={reviewQuery({ source: "", page: 0 })}
+                className={cn(
+                  "rounded-md border px-2.5 py-1 text-xs",
+                  !sourceFilter
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground",
+                )}
+              >
+                {t("sourceAll")}
+              </Link>
+              {REVIEW_SOURCES.map((item) => (
+                <Link
+                  key={item}
+                  href={reviewQuery({ source: item, page: 0 })}
+                  className={cn(
+                    "rounded-md border px-2.5 py-1 text-xs",
+                    sourceFilter === item
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground",
+                  )}
+                >
+                  {item} ({sourceCounts[item] ?? 0})
+                </Link>
+              ))}
+            </div>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             {rows.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("noSignals")}</p>
             ) : (
+              <>
               <table className="w-full min-w-[1080px] text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr className="border-b border-border">
@@ -203,7 +273,10 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(({ signal, level, upcoming }) => (
+                  {rows.map(({ signal, level, upcoming }) => {
+                    const registeredAt = trustedRegisteredAtFromRaw(signal.rawData);
+                    const discoveredAt = effectiveDiscoveredAt(signal);
+                    return (
                     <tr key={signal.id} className="border-b border-border/70">
                       <td className="py-3 pr-4 font-medium">
                         <Link
@@ -226,7 +299,15 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                       <td className="py-3 pr-4 text-muted-foreground">
                         {signal.langHint ?? "—"}
                       </td>
-                      <td className="py-3 pr-4">{signal.confidence}</td>
+                      <td className="py-3 pr-4">
+                        <ConfidenceCell
+                          source={signal.source}
+                          keyword={signal.keyword}
+                          rawData={signal.rawData}
+                          confidence={signal.confidence}
+                          incompleteLabel={t("confidenceIncomplete")}
+                        />
+                      </td>
                       <td className="py-3 pr-4">
                         <SignalTableSaturation
                           level={level}
@@ -236,17 +317,23 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                             moderate: t("saturationTableWarning"),
                             hot: t("saturationTableSafe"),
                             upcomingLaunch: t("upcomingLaunch"),
+                            unknown: t("saturationUnknown"),
                           }}
                         />
                       </td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">
-                        {formatRelativeTime(
-                          registeredAtFromRaw(signal.rawData) ?? "",
-                          locale,
-                        ) || (upcoming ? t("launchPending") : "—")}
+                      <td
+                        className="py-3 pr-4 text-xs text-muted-foreground"
+                        title={registeredAt?.toISOString()}
+                      >
+                        {registeredAt
+                          ? formatRelativeTime(registeredAt, locale)
+                          : "—"}
                       </td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">
-                        {formatRelativeTime(signal.discoveredAt, locale) || "—"}
+                      <td
+                        className="py-3 pr-4 text-xs text-muted-foreground"
+                        title={discoveredAt.toISOString()}
+                      >
+                        {formatRelativeTime(discoveredAt, locale)}
                       </td>
                       <td className="py-3">
                         <SignalReviewActions
@@ -255,9 +342,39 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                         />
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
+              {reviewPage.total > reviewPage.pageSize || page > 0 ? (
+                <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {t("reviewPage", {
+                      page: page + 1,
+                      total: Math.max(1, Math.ceil(reviewPage.total / reviewPage.pageSize)),
+                    })}
+                  </span>
+                  <div className="flex gap-2">
+                    {page > 0 ? (
+                      <Link
+                        href={reviewQuery({ page: page - 1 })}
+                        className="rounded-md border border-border px-2 py-1"
+                      >
+                        {t("reviewPrev")}
+                      </Link>
+                    ) : null}
+                    {(page + 1) * reviewPage.pageSize < reviewPage.total ? (
+                      <Link
+                        href={reviewQuery({ page: page + 1 })}
+                        className="rounded-md border border-border px-2 py-1"
+                      >
+                        {t("reviewNext")}
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+              </>
             )}
           </CardContent>
         </Card>

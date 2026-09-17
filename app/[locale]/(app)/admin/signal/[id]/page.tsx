@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import type { Prisma, SignalStatus } from "@prisma/client";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { ConfidenceCell } from "@/components/admin/confidence-cell";
 import { SignalEnrichmentStepper } from "@/components/admin/signal-enrichment-stepper";
 import { SignalReviewActions } from "@/components/admin/signal-review-actions";
 import { SaturationLegend } from "@/components/admin/saturation-legend";
@@ -17,11 +19,17 @@ import {
   isUpcomingLaunch,
   landingLiveFromRaw,
   launchAtFromRaw,
-  registeredAtFromRaw,
   saturationInputsForSignal,
 } from "@/lib/signals/saturation";
+import {
+  effectiveDiscoveredAt,
+  trustedRegisteredAtFromRaw,
+} from "@/lib/signals/whois-registered-at";
 
 const REVIEWABLE: SignalStatus[] = ["NEW", "ENRICHING", "CANDIDATE"];
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type SignalDetailPageProps = {
   params: Promise<{ locale: string; id: string }>;
@@ -39,12 +47,16 @@ function Field({
   value,
 }: {
   label: string;
-  value: string | number | null | undefined;
+  value: ReactNode;
 }) {
+  const empty =
+    value === null ||
+    value === undefined ||
+    value === "";
   return (
     <div className="space-y-1">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-sm">{value === 0 || value ? String(value) : "—"}</p>
+      <div className="text-sm">{empty ? "—" : value}</div>
     </div>
   );
 }
@@ -95,8 +107,8 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
     typeof raw.issuedAt === "string" && !Number.isNaN(Date.parse(raw.issuedAt))
       ? new Date(raw.issuedAt)
       : null;
-  const registeredAt =
-    registeredAtFromRaw(signal.rawData) ?? signal.discoveredAt;
+  const registeredAt = trustedRegisteredAtFromRaw(signal.rawData);
+  const discoveredAt = effectiveDiscoveredAt(signal);
   const upcoming = isUpcomingLaunch({
     source: signal.source,
     landingLive: landingLiveFromRaw(signal.rawData),
@@ -134,11 +146,16 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
             <h1 className="text-3xl font-semibold tracking-tight text-primary">{domain}</h1>
             <SignalStatusBadge status={signal.status} />
             <SaturationLegend
-              activeKey={upcoming ? "UPCOMING" : getSaturationLevel(saturationInputs)}
+              activeKey={
+                upcoming
+                  ? "UPCOMING"
+                  : (getSaturationLevel(saturationInputs) ?? "UNKNOWN")
+              }
               labels={{
                 saturationSaturated: t("saturationSaturated"),
                 saturationWarning: t("saturationWarning"),
                 saturationSafe: t("saturationSafe"),
+                saturationUnknown: t("saturationUnknown"),
                 upcomingLaunch: t("upcomingLaunch"),
               }}
             />
@@ -188,7 +205,18 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
           <Field label={t("colNiche")} value={signal.niche} />
           <Field label={t("colKeyword")} value={signal.keyword} />
           <Field label={t("colSource")} value={signal.source} />
-          <Field label={t("colConfidence")} value={signal.confidence} />
+          <Field
+            label={t("colConfidence")}
+            value={
+              <ConfidenceCell
+                source={signal.source}
+                keyword={signal.keyword}
+                rawData={signal.rawData}
+                confidence={signal.confidence}
+                incompleteLabel={t("confidenceIncomplete")}
+              />
+            }
+          />
           <Field label={t("competitorCount")} value={saturationInputs.keywordVolume} />
           <Field
             label={t("firstSeenDaysAgo")}
@@ -196,7 +224,7 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
           />
           <Field label={t("countryHint")} value={signal.countryHint} />
           <Field label={t("langHint")} value={signal.langHint} />
-          <Field label={t("colDiscovered")} value={formatDate(signal.discoveredAt)} />
+          <Field label={t("colDiscovered")} value={formatDate(discoveredAt)} />
           <Field label={t("colRegistered")} value={formatDate(registeredAt)} />
           <Field
             label={t("colLaunchAt")}
@@ -213,7 +241,7 @@ export default async function SignalDetailPage({ params }: SignalDetailPageProps
         <CardContent className="space-y-2 text-sm">
           <p>
             <span className="text-muted-foreground">{t("colDiscovered")}: </span>
-            {formatDate(signal.discoveredAt)}
+            {formatDate(discoveredAt)}
           </p>
           <p>
             <span className="text-muted-foreground">{t("createdInSystem")}: </span>

@@ -18,7 +18,7 @@ export type DashboardRecentSignal = {
   id: string;
   name: string;
   source: string;
-  saturation: SaturationLevel;
+  saturation: SaturationLevel | null;
   createdAt: string;
 };
 export type DashboardLast24h = {
@@ -150,15 +150,21 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 
   for (const row of keywordCounts) {
-    const volume = row.keyword ? (byKeyword[row.keyword] ?? row._count._all) : 1;
+    if (!row.keyword) {
+      continue;
+    }
+    const volume = byKeyword[row.keyword] ?? row._count._all;
     const level = getSaturationLevel({
+      keyword: row.keyword,
       keywordVolume: volume,
       medianVolume: median,
       p75Volume: p75,
       confidence: 50,
       firstSeenDaysAgo: 0,
     });
-    saturationTally[level] += row._count._all;
+    if (level) {
+      saturationTally[level] += row._count._all;
+    }
   }
 
   const byDay = new Map(emptyDays(30).map((point) => [point.date, point.count]));
@@ -219,12 +225,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     recentSignals: latest.map((signal) => {
       const volume = signal.keyword
         ? (byKeyword[signal.keyword] ?? 1)
-        : 1;
+        : 0;
       return {
         id: signal.id,
         name: signal.domain || signal.value,
         source: signal.source,
         saturation: getSaturationLevel({
+          keyword: signal.keyword,
           keywordVolume: volume,
           medianVolume: median,
           p75Volume: p75,

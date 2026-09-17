@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { MuncheyeCard } from "@/components/admin/muncheye-card";
 import {
   PLATFORM_IDS,
   PLATFORM_LABELS,
@@ -17,6 +18,7 @@ import {
   type PlatformField,
   type PlatformId,
 } from "@/lib/integrations/platforms";
+import type { MuncheyeCardStats } from "@/lib/collectors/marketplace/run-muncheye";
 
 type PublicConfig = {
   platform: PlatformId;
@@ -52,7 +54,7 @@ function fieldLabel(
   }
 }
 
-export function IntegrationTab() {
+export function IntegrationTab({ muncheyeStats }: { muncheyeStats: MuncheyeCardStats }) {
   const t = useTranslations("admin");
   const [platform, setPlatform] = useState<PlatformId>("digistore24");
   const [config, setConfig] = useState<PublicConfig | null>(null);
@@ -180,6 +182,10 @@ export function IntegrationTab() {
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <MuncheyeCard stats={muncheyeStats} />
+      </div>
+
       <div className="flex flex-wrap gap-2 border-b border-border">
         {PLATFORM_IDS.map((id) => (
           <button
