@@ -169,15 +169,8 @@ export async function runYoutubeCollection(
   }
 }
 
-export async function runCrtshCollection(): Promise<CollectionResult> {
-  await ensureSources();
-  const crtsh = await getSourceBySlug(SOURCE_SLUGS.crtsh);
-  await getSourceBySlug(SOURCE_SLUGS.httpProbe);
-
-  const config = parseCrtshConfig(crtsh.config);
-  if (crtsh.lastError?.includes("YOUTUBE_API_KEY")) {
-    await markSource(SOURCE_SLUGS.crtsh, "ACTIVE", null);
-  }
+function crtshRuntimeConfig(rawConfig: unknown) {
+  const config = parseCrtshConfig(rawConfig);
   const keywordOverride = process.env.COLLECT_KEYWORDS?.split(",")
     .map((item) => item.trim())
     .filter(Boolean);
@@ -191,33 +184,32 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
       config.maxDomainsPerRun,
     );
   }
-  const seen = new Set<string>();
-  const discovered: DiscoveredDomain[] = [];
-  const errors: string[] = [];
-  const crtshStats = emptyDropStats();
-  const nrdDiscovered = await runNrdCollection(config.keywords, config.maxDomainsPerRun, errors);
-  const digistore24Discovered = await runDigistore24Collection(
-    config.keywords,
-    config.maxDomainsPerRun,
-    errors,
-  );
-  const youtubeDiscovered = await runYoutubeCollection(
-    config.keywords,
-    config.maxDomainsPerRun,
-    errors,
-  );
+  return config;
+}
+
+/** Só crt.sh: fetch → persist → heartbeat. Sem NRD/Digistore/YouTube. */
+export async function runCrtshOnly(): Promise<CollectionResult> {
+  await ensureSources();
+  const crtsh = await getSourceBySlug(SOURCE_SLUGS.crtsh);
+  await getSourceBySlug(SOURCE_SLUGS.httpProbe);
+  const config = crtshRuntimeConfig(crtsh.config);
 
   if (crtsh.status === "PAUSED" || crtsh.status === "DISABLED") {
     return {
       keywords: config.keywords,
       discovered: 0,
       probed: 0,
-      nrdDiscovered,
-      digistore24Discovered,
-      youtubeDiscovered,
-      errors: [...errors, `crt.sh is ${crtsh.status}`],
+      nrdDiscovered: 0,
+      digistore24Discovered: 0,
+      youtubeDiscovered: 0,
+      errors: [`crt.sh is ${crtsh.status}`],
     };
   }
+
+  const seen = new Set<string>();
+  const discovered: DiscoveredDomain[] = [];
+  const errors: string[] = [];
+  const crtshStats = emptyDropStats();
 
   try {
     for (const keyword of config.keywords) {
@@ -284,9 +276,9 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
       keywords: config.keywords,
       discovered: discovered.length,
       probed,
-      nrdDiscovered,
-      digistore24Discovered,
-      youtubeDiscovered,
+      nrdDiscovered: 0,
+      digistore24Discovered: 0,
+      youtubeDiscovered: 0,
       errors,
       dropStats: {
         crtsh: crtshStats,
@@ -297,4 +289,48 @@ export async function runCrtshCollection(): Promise<CollectionResult> {
     await markSource(SOURCE_SLUGS.crtsh, "ERROR", message);
     throw error;
   }
+}
+
+export async function runCrtshCollection(): Promise<CollectionResult> {
+  await ensureSources();
+  const crtsh = await getSourceBySlug(SOURCE_SLUGS.crtsh);
+  await getSourceBySlug(SOURCE_SLUGS.httpProbe);
+
+  const config = crtshRuntimeConfig(crtsh.config);
+  if (crtsh.lastError?.includes("YOUTUBE_API_KEY")) {
+    await markSource(SOURCE_SLUGS.crtsh, "ACTIVE", null);
+  }
+  const errors: string[] = [];
+  const nrdDiscovered = await runNrdCollection(config.keywords, config.maxDomainsPerRun, errors);
+  const digistore24Discovered = await runDigistore24Collection(
+    config.keywords,
+    config.maxDomainsPerRun,
+    errors,
+  );
+  const youtubeDiscovered = await runYoutubeCollection(
+    config.keywords,
+    config.maxDomainsPerRun,
+    errors,
+  );
+
+  if (crtsh.status === "PAUSED" || crtsh.status === "DISABLED") {
+    return {
+      keywords: config.keywords,
+      discovered: 0,
+      probed: 0,
+      nrdDiscovered,
+      digistore24Discovered,
+      youtubeDiscovered,
+      errors: [...errors, `crt.sh is ${crtsh.status}`],
+    };
+  }
+
+  const crtshResult = await runCrtshOnly();
+  return {
+    ...crtshResult,
+    nrdDiscovered,
+    digistore24Discovered,
+    youtubeDiscovered,
+    errors: [...errors, ...crtshResult.errors],
+  };
 }

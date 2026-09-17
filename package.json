@@ -22,6 +22,8 @@
     "collect:dry": "tsx scripts/dry-run-collectors.ts",
     "collect:muncheye": "tsx scripts/persist-muncheye.ts",
     "collect:test": "tsx scripts/test-collector.ts",
+    "collect:crtsh": "tsx --env-file=.env scripts/run-crtsh.ts",
+    "collect:one": "tsx --env-file=.env scripts/run-collector.ts",
     "signals:enrich": "tsx scripts/enrich-signals.ts",
     "collect:nrd": "tsx scripts/test-nrd.ts",
     "test:nrd-heartbeat": "tsx lib/collectors/nrd-heartbeat.test.ts",

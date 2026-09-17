@@ -17,6 +17,7 @@ export type MuncheyeCardStats = {
   enriched: number;
   missingKeywords: number;
   autoDaily: boolean;
+  lastError: string | null;
 };
 
 async function heartbeat(lastError: string | null) {
@@ -73,10 +74,28 @@ export async function getMuncheyeCardStats(locale: string): Promise<MuncheyeCard
     enriched: counts.enriched,
     missingKeywords: counts.missingKeywords,
     autoDaily: active,
+    lastError: source?.lastError ?? null,
   };
 }
 
-export async function runMuncheyeCollection(options?: { skipEnrich?: boolean }) {
+export async function runMuncheyeCollection(options?: {
+  skipEnrich?: boolean;
+  scheduled?: boolean;
+}) {
+  if (options?.scheduled && !(await isMuncheyeAutoDaily())) {
+    const counts = await countMuncheyeSignals();
+    return {
+      skipped: true,
+      created: 0,
+      existing: 0,
+      collected: 0,
+      errors: [] as string[],
+      lastError: null as string | null,
+      collectedAt: new Date().toISOString(),
+      ...counts,
+    };
+  }
+
   await ensureSources();
   const result = await collectMuncheye();
   let created = 0;

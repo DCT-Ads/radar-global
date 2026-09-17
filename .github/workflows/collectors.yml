@@ -1,0 +1,50 @@
+name: Coletores
+
+on:
+  schedule:
+    - cron: "0 */4 * * *" # crtsh — a cada 4h
+    - cron: "15 */6 * * *" # whoisds — a cada 6h
+    - cron: "30 */6 * * *" # digistore24 — a cada 6h
+    - cron: "45 */12 * * *" # youtube — a cada 12h (economiza quota da API)
+    - cron: "0 8 * * *" # muncheye — 1x/dia (08:00 UTC)
+    - cron: "*/30 * * * *" # http_probe — a cada 30min
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Rodar 1 coletor manualmente"
+        required: true
+        type: choice
+        options: [crtsh, whoisds, digistore24, youtube, muncheye, http_probe]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Resolver slug pelo horário do cron
+        id: pick
+        run: |
+          case "${{ github.event.schedule }}" in
+            "0 */4 * * *")   echo "slug=crtsh"       >> "$GITHUB_OUTPUT" ;;
+            "15 */6 * * *")  echo "slug=whoisds"     >> "$GITHUB_OUTPUT" ;;
+            "30 */6 * * *")  echo "slug=digistore24" >> "$GITHUB_OUTPUT" ;;
+            "45 */12 * * *") echo "slug=youtube"     >> "$GITHUB_OUTPUT" ;;
+            "0 8 * * *")     echo "slug=muncheye"    >> "$GITHUB_OUTPUT" ;;
+            "*/30 * * * *")  echo "slug=http_probe"  >> "$GITHUB_OUTPUT" ;;
+            *)               echo "slug=${{ github.event.inputs.slug }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Rodar coletor
+        run: npx tsx scripts/run-collector.ts "${{ steps.pick.outputs.slug }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          DIGISTORE24_API_KEY: ${{ secrets.DIGISTORE24_API_KEY }}

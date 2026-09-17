@@ -1,18 +1,59 @@
 import { prisma } from "@/lib/prisma";
 
+function isTransientDbError(error: unknown) {
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String((error as { code?: unknown }).code)
+      : "";
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    code === "P1001" ||
+    code === "P1017" ||
+    /can't reach database/i.test(message) ||
+    /timed out fetching a new connection/i.test(message) ||
+    /connection reset/i.test(message) ||
+    /server has closed the connection/i.test(message)
+  );
+}
+
+async function withRetry<T>(
+  label: string,
+  fn: () => Promise<T>,
+  tries = 5,
+  baseMs = 1_500,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= tries; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastErr = error;
+      if (!isTransientDbError(error) || attempt === tries) {
+        throw error;
+      }
+      const wait = baseMs * 2 ** (attempt - 1);
+      console.warn(`[${label}] tentativa ${attempt}/${tries} falhou. Retry em ${wait}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+  }
+  throw lastErr;
+}
+
 export async function markSource(
   slug: string,
   status: "ACTIVE" | "ERROR" | "DISABLED",
   lastError: string | null,
 ) {
-  await prisma.source.update({
-    where: { slug },
-    data: {
-      status,
-      lastRunAt: new Date(),
-      lastError,
-    },
-  });
+  await withRetry(`markSource:${slug}`, () =>
+    prisma.source.update({
+      where: { slug },
+      data: {
+        status,
+        lastRunAt: new Date(),
+        lastError,
+      },
+    }),
+  );
 }
 
 export type HeartbeatReport = {
