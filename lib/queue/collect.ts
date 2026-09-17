@@ -64,7 +64,7 @@ export async function drainStaleCollectJobs() {
   if (!queue) {
     return 0;
   }
-  const waiting = await queue.getJobs(["waiting", "paused"]);
+  const waiting = await queue.getJobs(["waiting"]);
   let removed = 0;
   for (const job of waiting) {
     const id = String(job.id ?? "");

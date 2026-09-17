@@ -66,7 +66,9 @@ export async function getMuncheyeCardStats(locale: string): Promise<MuncheyeCard
   const active = source?.status === "ACTIVE";
   return {
     active,
-    lastCollectAgo: formatRelativeTime(source?.lastRunAt, locale),
+    lastCollectAgo: source?.lastRunAt
+      ? formatRelativeTime(source.lastRunAt, locale)
+      : "—",
     newLaunches: counts.newLaunches,
     enriched: counts.enriched,
     missingKeywords: counts.missingKeywords,
