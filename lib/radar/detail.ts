@@ -1,5 +1,4 @@
 import type { Marketplace } from "@prisma/client";
-import { marketplaceDefaultCurrency } from "@/lib/collectors/commission/types";
 import { ageInDays } from "@/lib/collectors/domains";
 import { prisma } from "@/lib/prisma";
 import { firstSeenAtFromLaunch } from "@/lib/radar/first-seen";
@@ -30,11 +29,7 @@ export function formatAffiliateCommission(commission?: {
   }
   if (commission.amountCents != null) {
     const amount = (commission.amountCents / 100).toFixed(2);
-    const currency =
-      commission.currency ??
-      (commission.marketplace
-        ? marketplaceDefaultCurrency(commission.marketplace)
-        : "USD");
+    const currency = commission.currency ?? "USD";
     return `${amount} ${currency}`;
   }
   return null;

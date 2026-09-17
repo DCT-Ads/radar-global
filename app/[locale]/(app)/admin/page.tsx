@@ -255,6 +255,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
             {rows.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("noSignals")}</p>
             ) : (
+              <>
               <table className="w-full min-w-[1080px] text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr className="border-b border-border">
@@ -324,7 +325,9 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                         className="py-3 pr-4 text-xs text-muted-foreground"
                         title={registeredAt?.toISOString()}
                       >
-                        {formatRelativeTime(registeredAt, locale)}
+                        {registeredAt
+                          ? formatRelativeTime(registeredAt, locale)
+                          : "—"}
                       </td>
                       <td
                         className="py-3 pr-4 text-xs text-muted-foreground"
@@ -371,6 +374,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
                   </div>
                 </div>
               ) : null}
+              </>
             )}
           </CardContent>
         </Card>
