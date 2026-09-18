@@ -2,9 +2,9 @@ import { ageInDays } from "@/lib/collectors/domains";
 import { prisma } from "@/lib/prisma";
 import { firstSeenAtFromLaunch, uniqueEvidenceCount } from "@/lib/radar/first-seen";
 import { computeEarlySignal, goldenWindowRank } from "@/lib/scoring/early-signal";
+import { loadKeywordVolumeIndex } from "@/lib/signals/keyword-volume";
 import {
   getSaturationLevel,
-  indexKeywordVolumes,
   isUpcomingLaunch,
   landingLiveFromRaw,
   type SaturationLevel,
@@ -30,32 +30,26 @@ export type RadarLaunchRow = {
 export async function listVerifiedRadarLaunches(options?: {
   includeUpcoming?: boolean;
 }): Promise<RadarLaunchRow[]> {
-  const [launches, keywordCounts] = await Promise.all([
-    prisma.launch.findMany({
-      where: {
-        evidences: { some: {} },
-        signals: { some: { status: "VERIFIED" } },
+  const launches = await prisma.launch.findMany({
+    where: {
+      evidences: { some: {} },
+      signals: { some: { status: "VERIFIED" } },
+    },
+    include: {
+      producer: { select: { id: true, name: true, domain: true } },
+      evidences: {
+        include: { source: true },
+        orderBy: { capturedAt: "desc" },
       },
-      include: {
-        producer: { select: { id: true, name: true, domain: true } },
-        evidences: {
-          include: { source: true },
-          orderBy: { capturedAt: "desc" },
-        },
-        signals: {
-          where: { status: "VERIFIED" },
-          orderBy: { discoveredAt: "desc" },
-          include: { evidences: { select: { id: true } } },
-        },
+      signals: {
+        where: { status: "VERIFIED" },
+        orderBy: { discoveredAt: "desc" },
+        include: { evidences: { select: { id: true } } },
       },
-    }),
-    prisma.signal.groupBy({
-      by: ["keyword"],
-      _count: { _all: true },
-    }),
-  ]);
+    },
+  });
 
-  const { byKeyword, median, p75 } = indexKeywordVolumes(keywordCounts);
+  const { byKeyword, median, p75 } = await loadKeywordVolumeIndex();
 
   const rows = launches.map((launch) => {
     const firstSeenAt = firstSeenAtFromLaunch({

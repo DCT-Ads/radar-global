@@ -1,16 +1,22 @@
 import { prisma } from "@/lib/prisma";
+import { indexKeywordVolumes } from "@/lib/signals/saturation";
 
 export type KeywordVolumeContext = {
   byKeyword: Record<string, number>;
   maxVolume: number;
 };
 
-let cached: { at: number; value: KeywordVolumeContext } | null = null;
-const CACHE_MS = 15_000;
+export type KeywordVolumeIndex = KeywordVolumeContext & {
+  median: number;
+  p75: number;
+};
 
-export async function loadKeywordVolumeContext(
+let cached: { at: number; value: KeywordVolumeIndex } | null = null;
+const CACHE_MS = 30_000;
+
+export async function loadKeywordVolumeIndex(
   force = false,
-): Promise<KeywordVolumeContext> {
+): Promise<KeywordVolumeIndex> {
   if (!force && cached && Date.now() - cached.at < CACHE_MS) {
     return cached.value;
   }
@@ -18,13 +24,16 @@ export async function loadKeywordVolumeContext(
     by: ["keyword"],
     _count: { _all: true },
   });
-  const byKeyword = Object.fromEntries(
-    grouped
-      .filter((row) => row.keyword)
-      .map((row) => [row.keyword as string, row._count._all]),
-  );
+  const { byKeyword, median, p75 } = indexKeywordVolumes(grouped);
   const maxVolume = Math.max(1, ...Object.values(byKeyword), 1);
-  const value = { byKeyword, maxVolume };
+  const value = { byKeyword, median, p75, maxVolume };
   cached = { at: Date.now(), value };
   return value;
+}
+
+export async function loadKeywordVolumeContext(
+  force = false,
+): Promise<KeywordVolumeContext> {
+  const { byKeyword, maxVolume } = await loadKeywordVolumeIndex(force);
+  return { byKeyword, maxVolume };
 }

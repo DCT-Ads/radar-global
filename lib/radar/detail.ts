@@ -5,9 +5,9 @@ import { firstSeenAtFromLaunch } from "@/lib/radar/first-seen";
 import { extractProducerContact, type ProducerContact } from "@/lib/producers/contact";
 import { enrichProducerById, isProducerEnrichmentDue } from "@/lib/producers/enrich";
 import { computeEarlySignal } from "@/lib/scoring/early-signal";
+import { loadKeywordVolumeIndex } from "@/lib/signals/keyword-volume";
 import {
   getSaturationLevel,
-  indexKeywordVolumes,
   isUpcomingLaunch,
   landingLiveFromRaw,
 } from "@/lib/signals/saturation";
@@ -36,33 +36,29 @@ export function formatAffiliateCommission(commission?: {
 }
 
 export async function getRadarLaunch(id: string) {
-  const [launch, keywordCounts] = await Promise.all([
-    prisma.launch.findUnique({
-      where: { id },
-      include: {
-        producer: { include: { country: true, evidences: true } },
-        country: true,
-        evidences: {
-          include: { source: true },
-          orderBy: { capturedAt: "desc" },
-        },
-        signals: {
-          where: { status: "VERIFIED" },
-          orderBy: { discoveredAt: "desc" },
-        },
-        scores: { orderBy: { computedAt: "desc" }, take: 1 },
-        commissions: { orderBy: { capturedAt: "desc" }, take: 1 },
+  const launch = await prisma.launch.findUnique({
+    where: { id },
+    include: {
+      producer: { include: { country: true, evidences: true } },
+      country: true,
+      evidences: {
+        include: { source: true },
+        orderBy: { capturedAt: "desc" },
       },
-    }),
-    prisma.signal.groupBy({
-      by: ["keyword"],
-      _count: { _all: true },
-    }),
-  ]);
+      signals: {
+        where: { status: "VERIFIED" },
+        orderBy: { discoveredAt: "desc" },
+      },
+      scores: { orderBy: { computedAt: "desc" }, take: 1 },
+      commissions: { orderBy: { capturedAt: "desc" }, take: 1 },
+    },
+  });
 
   if (!launch || launch.signals.length === 0) {
     return null;
   }
+
+  const { byKeyword, median, p75 } = await loadKeywordVolumeIndex();
 
   if (isProducerEnrichmentDue(launch.producer.enrichedAt)) {
     const enriched = await enrichProducerById(launch.producer.id);
@@ -90,7 +86,6 @@ export async function getRadarLaunch(id: string) {
     })),
   });
 
-  const { byKeyword, median, p75 } = indexKeywordVolumes(keywordCounts);
   const latestSignal = launch.signals[0];
   const keyword = latestSignal?.keyword ?? launch.niche ?? null;
   const saturation = getSaturationLevel({
