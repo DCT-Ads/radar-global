@@ -7,7 +7,7 @@ export type AccessUser = {
 
 export const PLAN_PRICES = {
   STANDARD: { amount: "37,90", monthly: "R$ 37,90" },
-  PREMIUM: { amount: "59,90", monthly: "R$ 59,90" },
+  PREMIUM: { amount: "54,60", monthly: "R$ 54,60" },
 } as const;
 
 export function hasPremiumAccess(user: AccessUser | null | undefined) {
