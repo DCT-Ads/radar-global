@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,16 @@ export default async function LoginPage({ params }: LoginPageProps) {
       <div className="absolute right-6 top-6">
         <LocaleSwitcher />
       </div>
-      <Card className="w-full max-w-md border-border/80 bg-card/80 backdrop-blur">
+      <div className="flex w-full max-w-md flex-col items-center">
+        <Image
+          src="/brand/capa-produto.png"
+          alt={t("home.coverAlt")}
+          width={220}
+          height={220}
+          priority
+          className="mb-4 h-auto w-40"
+        />
+      <Card className="w-full border-border/80 bg-card/80 backdrop-blur">
         <CardHeader>
           <CardTitle className="text-2xl">{t("auth.loginTitle")}</CardTitle>
           <CardDescription>{t("auth.loginSubtitle")}</CardDescription>
@@ -34,6 +44,7 @@ export default async function LoginPage({ params }: LoginPageProps) {
           </p>
         </CardContent>
       </Card>
+      </div>
     </main>
   );
 }

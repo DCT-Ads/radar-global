@@ -1,7 +1,7 @@
 import type { AccessPlan, Role } from "@prisma/client";
-import { Link } from "@/i18n/navigation";
-import { hasPremiumAccess } from "@/lib/auth/access";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { AppNav } from "@/components/layout/app-nav";
+import { hasPremiumAccess } from "@/lib/auth/access";
 
 type AppSidebarProps = {
   role: Role;
@@ -12,9 +12,7 @@ export async function AppSidebar({ role, plan }: AppSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-border bg-card/40 md:flex md:flex-col">
       <div className="border-b border-border px-6 py-5">
-        <Link href="/dashboard" className="text-lg font-semibold tracking-tight text-primary">
-          Radar Global
-        </Link>
+        <BrandLogo href="/dashboard" />
       </div>
       <AppNav
         role={role}

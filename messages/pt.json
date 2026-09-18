@@ -226,7 +226,11 @@
   },
   "home": {
     "headline": "Radar Global",
-    "subtitle": "Inteligência de mercado em tempo real para afiliados."
+    "subtitle": "Inteligência de mercado em tempo real para afiliados.",
+    "coverAlt": "Logo Radar Global",
+    "laptopAlt": "Radar Global no computador",
+    "uiAlt": "Tela do Radar Global",
+    "devicesAlt": "Radar Global no PC e no celular"
   },
   "radar": {
     "title": "Radar",

@@ -16,13 +16,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DCT Namalu",
+  metadataBase: new URL("https://radar-global-two.vercel.app"),
+  title: "Radar Global",
   description: "Radar de lançamentos globais",
   manifest: "/manifest.json",
-  applicationName: "DCT Namalu",
+  applicationName: "Radar Global",
   appleWebApp: {
     capable: true,
-    title: "Namalu",
+    title: "Radar Global",
     statusBarStyle: "black-translucent",
   },
   icons: [
@@ -31,10 +32,29 @@ export const metadata: Metadata = {
     { url: "/icons/icon-512-maskable.png", sizes: "512x512", type: "image/png" },
     { url: "/icons/icon-192.png", rel: "apple-touch-icon", sizes: "192x192" },
   ],
+  openGraph: {
+    title: "Radar Global",
+    description: "Radar de lançamentos globais",
+    siteName: "Radar Global",
+    images: [
+      {
+        url: "/brand/banner-laptop.png",
+        width: 1920,
+        height: 1080,
+        alt: "Radar Global",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Radar Global",
+    description: "Radar de lançamentos globais",
+    images: ["/brand/banner-laptop.png"],
+  },
 };
 
 export const viewport = {
-  themeColor: "#000000",
+  themeColor: "#0B1C33",
 };
 
 export default async function RootLayout({

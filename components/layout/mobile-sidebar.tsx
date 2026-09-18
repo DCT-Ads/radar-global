@@ -1,6 +1,7 @@
 "use client";
 
 import type { AccessPlan, Role } from "@prisma/client";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { hasPremiumAccess } from "@/lib/auth/access";
@@ -21,7 +22,8 @@ export function MobileSidebar({ role, plan }: MobileSidebarProps) {
       </SheetTrigger>
       <SheetContent side="left" className="w-64">
         <SheetHeader>
-          <SheetTitle className="text-primary">Radar Global</SheetTitle>
+          <SheetTitle className="sr-only">Radar Global</SheetTitle>
+          <BrandLogo href="/dashboard" />
         </SheetHeader>
         <AppNav
           role={role}

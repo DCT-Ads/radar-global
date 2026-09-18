@@ -226,7 +226,11 @@
   },
   "home": {
     "headline": "Radar Global",
-    "subtitle": "Real-time market intelligence for affiliates."
+    "subtitle": "Real-time market intelligence for affiliates.",
+    "coverAlt": "Radar Global logo",
+    "laptopAlt": "Radar Global on a laptop",
+    "uiAlt": "Radar Global app screen",
+    "devicesAlt": "Radar Global on computer and phone"
   },
   "radar": {
     "title": "Radar",
