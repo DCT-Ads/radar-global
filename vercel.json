@@ -2,5 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "prisma generate && next build",
   "framework": "nextjs",
-  "regions": ["gru1"]
+  "regions": ["gru1"],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "radar-global-two.vercel.app"
+        }
+      ],
+      "destination": "https://radar.rotadomilhao.store/$1",
+      "permanent": true
+    }
+  ]
 }

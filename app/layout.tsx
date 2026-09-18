@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://radar-global-two.vercel.app"),
+  metadataBase: new URL("https://radar.rotadomilhao.store"),
   title: "Radar Global",
   description: "Radar de lançamentos globais",
   manifest: "/manifest.json",
