@@ -16,7 +16,11 @@ function stringField(raw: Record<string, unknown> | null, key: string) {
 
 export function launchIdentityFromSignal(signal: Pick<Signal, "source" | "value" | "domain" | "rawData">) {
   const raw = asRecord(signal.rawData);
-  const title = stringField(raw, "title") ?? stringField(raw, "headline");
+  const title =
+    stringField(raw, "title") ??
+    stringField(raw, "headline") ??
+    stringField(raw, "product_name");
+  const vendor = stringField(raw, "vendor");
 
   if (signal.source === YOUTUBE_SOURCE) {
     const videoId = signal.value;
@@ -34,7 +38,7 @@ export function launchIdentityFromSignal(signal: Pick<Signal, "source" | "value"
   const domain = signal.domain ?? signal.value;
   return {
     producerDomain: domain,
-    producerName: domain,
+    producerName: vendor ?? domain,
     launchDomain: domain,
     launchSlug: domainSlug(domain),
     launchTitle: title ?? domain,

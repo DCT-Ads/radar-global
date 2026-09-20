@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminTabs } from "@/components/admin/admin-tabs";
+import { ManualLaunchForm } from "@/components/admin/manual-launch-form";
 import { RunCollectionButton } from "@/components/admin/run-collection-button";
 import {
   SATURATION_FILTERS,
@@ -190,6 +191,8 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
       ) : null}
 
       {tab === "review" ? (
+        <>
+        <ManualLaunchForm />
         <Card>
           <CardHeader className="gap-4">
             <CardTitle className="text-base text-primary">{t("reviewTitle")}</CardTitle>
@@ -378,8 +381,19 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
             )}
           </CardContent>
         </Card>
+        </>
       ) : (
         <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base text-primary">{t("collectHelpTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>{t("collectHelpAuto")}</p>
+              <p>{t("collectHelpButton")}</p>
+              <p>{t("collectHelpMuncheye")}</p>
+            </CardContent>
+          </Card>
           <div className="flex justify-end">
             <RunCollectionButton />
           </div>

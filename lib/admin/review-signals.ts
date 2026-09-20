@@ -8,6 +8,13 @@ export const REVIEW_SOURCES = [
   "digistore24",
   "youtube",
   "muncheye",
+  "hotmart",
+  "clickbank",
+  "kiwify",
+  "monetizze",
+  "braip",
+  "eduzz",
+  "baygood",
 ] as const;
 
 export type ReviewSource = (typeof REVIEW_SOURCES)[number];
