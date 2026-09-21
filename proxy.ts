@@ -5,7 +5,15 @@ import { SESSION_COOKIE, verifySession } from "./lib/auth/jwt";
 
 const intlMiddleware = createMiddleware(routing);
 
-const publicPathnames = new Set(["/", "/login", "/signup"]);
+const publicPathnames = new Set([
+  "/",
+  "/login",
+  "/signup",
+  "/oferta",
+  "/obrigado",
+  "/obrigado/aguardando",
+  "/obrigado/analise",
+]);
 const authPathnames = new Set(["/login", "/signup"]);
 
 function stripLocale(pathname: string) {
