@@ -10,11 +10,14 @@ const publicPathnames = new Set([
   "/login",
   "/signup",
   "/oferta",
+  "/anual",
+  "/eu",
   "/obrigado",
   "/obrigado/aguardando",
   "/obrigado/analise",
 ]);
 const authPathnames = new Set(["/login", "/signup"]);
+const brLockedPathnames = new Set(["/", "/oferta", "/anual"]);
 
 function stripLocale(pathname: string) {
   const matchedLocale = routing.locales.find(
@@ -38,6 +41,15 @@ function withLocale(pathname: string, locale: string) {
 
 export default async function proxy(request: NextRequest) {
   const { locale, pathname } = stripLocale(request.nextUrl.pathname);
+
+  if (brLockedPathnames.has(pathname) && locale !== "pt") {
+    const locked = new URL(pathname, request.url);
+    locked.search = request.nextUrl.search;
+    const response = NextResponse.redirect(locked);
+    response.cookies.set("NEXT_LOCALE", "pt", { path: "/", sameSite: "lax" });
+    return response;
+  }
+
   const isPublic = publicPathnames.has(pathname);
   const isAuthPage = authPathnames.has(pathname);
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");

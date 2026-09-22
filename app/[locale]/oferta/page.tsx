@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { OfertaLanding } from "@/components/hotmart/oferta-landing";
-import { assertLocale } from "@/i18n/routing";
 
 type OfertaPageProps = {
   params: Promise<{ locale: string }>;
@@ -11,7 +10,7 @@ export async function generateMetadata({
   params,
 }: OfertaPageProps): Promise<Metadata> {
   const { locale } = await params;
-  setRequestLocale(assertLocale(locale));
+  setRequestLocale("pt");
   const t = await getTranslations("oferta");
   return {
     title: `Radar Global — ${t("plansTitle")}`,
@@ -26,6 +25,6 @@ export async function generateMetadata({
 
 export default async function OfertaPage({ params }: OfertaPageProps) {
   const { locale } = await params;
-  setRequestLocale(assertLocale(locale));
+  setRequestLocale("pt");
   return <OfertaLanding />;
 }

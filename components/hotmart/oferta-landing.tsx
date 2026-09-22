@@ -3,7 +3,6 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { PLAN_PRICES } from "@/lib/auth/access";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
@@ -47,10 +46,10 @@ export async function OfertaLanding() {
     <main className="relative min-h-screen bg-[#0B1C33] text-[#F5F7FA]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.16),transparent_55%)]" />
       <header className="relative z-10 mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
-        <Link href="/" className="text-sm font-semibold tracking-wide text-[#D4AF37]">
-          Radar Global
-        </Link>
-        <LocaleSwitcher />
+        <p className="text-sm font-semibold tracking-wide text-[#D4AF37]">Radar Global</p>
+        <p className="rounded-full border border-[#D4AF37] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#D4AF37]">
+          Real · Brasil · Português
+        </p>
       </header>
 
       <section className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pb-12 pt-4 text-center">
