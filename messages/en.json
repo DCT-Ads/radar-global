@@ -392,6 +392,23 @@
     "ctaNo": "No, keep monthly",
     "footer": "Radar Global · Upsell · radar.rotadomilhao.store/upsell"
   },
+  "bemVindo": {
+    "lock": "Real · Brazil · Portuguese",
+    "kicker": "Purchase confirmed",
+    "headline": "Thank you. Welcome to Radar Global.",
+    "body": "Your subscription is ready. Create your account (or sign in) with the same email used at checkout.",
+    "ctaSignup": "Create account",
+    "ctaLogin": "I already have an account",
+    "footer": "Radar Global · radar.rotadomilhao.store/bem-vindo"
+  },
+  "outraOportunidade": {
+    "lock": "Real · Brazil · Portuguese",
+    "kicker": "That's okay",
+    "headline": "That's okay — maybe another time.",
+    "body": "The annual plan can wait. Stay close on social — news and launches go out first on Instagram.",
+    "ctaInstagram": "Open Instagram",
+    "footer": "Radar Global · instagram.com/robertac8luly"
+  },
   "ofertaEuro": {
     "currencyLock": "Euro · Europe",
     "kicker": "Monthly offer in Euro",

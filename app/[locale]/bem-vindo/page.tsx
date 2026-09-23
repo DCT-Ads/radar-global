@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Sua compra foi confirmada. Seja bem-vindo ao Radar Global.",
 };
 
-export default async function ObrigadoPage() {
+export default async function BemVindoPage() {
   setRequestLocale("pt");
   return <BemVindoLanding />;
 }

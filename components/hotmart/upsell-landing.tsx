@@ -58,7 +58,7 @@ export async function UpsellLanding() {
             {t("ctaYes")}
           </a>
           <Link
-            href="/obrigado"
+            href="/outra-oportunidade"
             className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-md border border-[#D4AF37] bg-transparent px-6 text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10"
           >
             {t("ctaNo")}

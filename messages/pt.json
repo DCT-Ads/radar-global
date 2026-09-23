@@ -392,6 +392,23 @@
     "ctaNo": "Não, continuar com o mensal",
     "footer": "Radar Global · Upsell · radar.rotadomilhao.store/upsell"
   },
+  "bemVindo": {
+    "lock": "Real · Brasil · Português",
+    "kicker": "Compra confirmada",
+    "headline": "Obrigada. Seja bem-vindo ao Radar Global.",
+    "body": "Sua assinatura está liberada. Crie sua conta (ou entre) com o mesmo e-mail da compra para abrir o Radar.",
+    "ctaSignup": "Criar conta",
+    "ctaLogin": "Já tenho conta",
+    "footer": "Radar Global · radar.rotadomilhao.store/bem-vindo"
+  },
+  "outraOportunidade": {
+    "lock": "Real · Brasil · Português",
+    "kicker": "Tudo bem",
+    "headline": "Tudo bem, quem sabe em uma outra oportunidade.",
+    "body": "O anual fica para depois. Fique ligado nas nossas redes sociais — novidades e lançamentos saem primeiro no Instagram.",
+    "ctaInstagram": "Abrir Instagram",
+    "footer": "Radar Global · instagram.com/robertac8luly"
+  },
   "ofertaEuro": {
     "currencyLock": "Euro · Europa",
     "kicker": "Oferta mensal em Euro",
