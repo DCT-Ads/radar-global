@@ -1,4 +1,4 @@
-import { NRD_SOURCE } from "@/lib/collectors/nrd";
+import { NRD_SOURCE } from "@/lib/collectors/nrd-source";
 import { prisma } from "@/lib/prisma";
 import {
   getSaturationLevel,

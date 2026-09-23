@@ -1,10 +1,19 @@
+import "server-only";
 import type { Prisma } from "@prisma/client";
-import { PLATFORM_IDS, PLATFORM_LABELS, type PlatformId } from "@/lib/integrations/platforms";
 import { prisma } from "@/lib/prisma";
 import { verifySignal } from "@/lib/signals/review";
+import {
+  isManualPlatform,
+  platformLabel,
+  type ManualPlatform,
+} from "@/lib/signals/manual-platforms";
 
-export const MANUAL_PLATFORMS = [...PLATFORM_IDS, "muncheye"] as const;
-export type ManualPlatform = (typeof MANUAL_PLATFORMS)[number];
+export type { ManualPlatform } from "@/lib/signals/manual-platforms";
+export {
+  MANUAL_PLATFORMS,
+  isManualPlatform,
+  platformLabel,
+} from "@/lib/signals/manual-platforms";
 
 export type ManualLaunchInput = {
   id?: string;
@@ -19,17 +28,6 @@ export type ManualLaunchInput = {
   notes?: string;
   publish?: boolean;
 };
-
-export function isManualPlatform(value: string): value is ManualPlatform {
-  return MANUAL_PLATFORMS.includes(value as ManualPlatform);
-}
-
-export function platformLabel(platform: ManualPlatform) {
-  if (platform === "muncheye") {
-    return "MunchEye";
-  }
-  return PLATFORM_LABELS[platform as PlatformId];
-}
 
 function hostFromUrl(url: string): string | null {
   try {

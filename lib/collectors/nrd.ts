@@ -1,9 +1,10 @@
+import "server-only";
 import { inflateRawSync, gunzipSync } from "node:zlib";
 import { ALL_KEYWORDS, nicheForKeyword } from "@/lib/niches";
 import { cleanHost, domainIncludesKeyword } from "./domains";
 import { emptyDropStats, type CollectorDropStats } from "./drop-stats";
 
-export const NRD_SOURCE = "whoisds";
+export { NRD_SOURCE } from "./nrd-source";
 
 export type NrdHit = {
   domain: string;

@@ -1,5 +1,5 @@
 import type { Prisma, SignalStatus } from "@prisma/client";
-import { NRD_SOURCE } from "@/lib/collectors/nrd";
+import { NRD_SOURCE } from "@/lib/collectors/nrd-source";
 import { prisma } from "@/lib/prisma";
 
 export const REVIEW_SOURCES = [

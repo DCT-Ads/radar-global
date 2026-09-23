@@ -1,5 +1,5 @@
 import { ageInDays } from "@/lib/collectors/domains";
-import { NRD_SOURCE } from "@/lib/collectors/nrd";
+import { NRD_SOURCE } from "@/lib/collectors/nrd-source";
 import { prisma } from "@/lib/prisma";
 
 export type SaturationLevel = "SAFE" | "WARNING" | "SATURATED";

@@ -12,7 +12,7 @@ import {
   MANUAL_PLATFORMS,
   platformLabel,
   type ManualPlatform,
-} from "@/lib/signals/persist-manual";
+} from "@/lib/signals/manual-platforms";
 
 type ManualRow = {
   id: string;
