@@ -11,13 +11,14 @@ const publicPathnames = new Set([
   "/signup",
   "/oferta",
   "/anual",
+  "/upsell",
   "/eu",
   "/obrigado",
   "/obrigado/aguardando",
   "/obrigado/analise",
 ]);
 const authPathnames = new Set(["/login", "/signup"]);
-const brLockedPathnames = new Set(["/", "/oferta", "/anual"]);
+const brLockedPathnames = new Set(["/", "/oferta", "/anual", "/upsell"]);
 
 function stripLocale(pathname: string) {
   const matchedLocale = routing.locales.find(

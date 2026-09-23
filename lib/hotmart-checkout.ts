@@ -7,7 +7,9 @@ export function hotmartCheckoutUrls() {
       process.env.NEXT_PUBLIC_HOTMART_PREMIUM_EU_URL?.trim() || "",
       "10",
     ),
-    premiumBrAnnual: process.env.NEXT_PUBLIC_HOTMART_PREMIUM_BR_ANNUAL_URL?.trim() || "",
+    premiumBrAnnual:
+      process.env.NEXT_PUBLIC_HOTMART_PREMIUM_BR_ANNUAL_URL?.trim() ||
+      "https://pay.hotmart.com/B107672953D?off=i148m1&checkoutMode=10",
   };
 }
 

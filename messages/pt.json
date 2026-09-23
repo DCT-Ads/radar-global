@@ -377,6 +377,21 @@
     "cta": "Quero o Premium anual",
     "footer": "Radar Global · Real · radar.rotadomilhao.store/anual"
   },
+  "upsell": {
+    "lock": "Real · Brasil · Português",
+    "kicker": "Oferta especial · só agora",
+    "headline": "Antes de entrar: pague 10 meses e use 12.",
+    "subtitle": "Sua assinatura mensal já está a caminho. Este upsell troca o mensal pelo Premium anual, em Real.",
+    "badge": "2 meses grátis",
+    "equalsTen": "Total R$ 799,99 · Real",
+    "orTwelve": "Ou 12× R$ 66,59 / R$ 799,00 à vista.",
+    "b1": "Acesso completo o ano inteiro",
+    "b2": "Lançamentos futuros e visão antecipada do mercado",
+    "b3": "Mesmo Radar Premium, sem pagar 12× o mensal cheio",
+    "ctaYes": "Sim, quero o anual · 10× R$ 79,99",
+    "ctaNo": "Não, continuar com o mensal",
+    "footer": "Radar Global · Upsell · radar.rotadomilhao.store/upsell"
+  },
   "ofertaEuro": {
     "currencyLock": "Euro · Europa",
     "kicker": "Oferta mensal em Euro",
