@@ -1,13 +1,11 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { PREMIUM_ANNUAL_BRL } from "@/lib/auth/access";
-import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
+import { HotmartSalesFunnel } from "@/components/hotmart/hotmart-sales-funnel";
 
 export async function UpsellLanding() {
   const t = await getTranslations("upsell");
   const home = await getTranslations("home");
-  const href = hotmartCheckoutUrls().premiumBrAnnual;
 
   return (
     <main className="relative min-h-screen bg-[#0B1C33] text-[#F5F7FA]">
@@ -36,27 +34,9 @@ export async function UpsellLanding() {
         </h1>
         <p className="mt-4 max-w-xl text-base text-[#8BA3B8]">{t("subtitle")}</p>
 
-        <div className="mt-8 w-full rounded-2xl border border-[#D4AF37] bg-[#12263F]/90 p-6 text-left">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D4AF37]">
-            {t("badge")}
-          </p>
-          <p className="mt-3 text-3xl font-semibold">{PREMIUM_ANNUAL_BRL.tenX}</p>
-          <p className="mt-1 text-lg text-[#D4AF37]">{t("equalsTen")}</p>
-          <p className="mt-3 text-sm text-[#F5F7FA]">{t("orTwelve")}</p>
-          <ul className="mt-4 space-y-2 text-sm text-[#8BA3B8]">
-            <li>✓ {t("b1")}</li>
-            <li>✓ {t("b2")}</li>
-            <li>✓ {t("b3")}</li>
-          </ul>
-        </div>
+        <HotmartSalesFunnel />
 
         <div className="mt-8 flex w-full flex-col items-center gap-3">
-          <a
-            href={href}
-            className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-md bg-[#D4AF37] px-6 text-sm font-semibold text-[#0B1C33] hover:bg-[#D4AF37]/90"
-          >
-            {t("ctaYes")}
-          </a>
           <Link
             href="/outra-oportunidade"
             className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-md border border-[#D4AF37] bg-transparent px-6 text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10"
