@@ -1,10 +1,15 @@
+/** Checkout Brasil do produto Hotmart (modo personalizado). */
+export const HOTMART_BR_CHECKOUT =
+  "https://pay.hotmart.com/B107672953D?checkoutMode=10";
+
 export function hotmartCheckoutUrls() {
   return {
-    standard: process.env.NEXT_PUBLIC_HOTMART_STANDARD_URL?.trim() || "",
-    premium: process.env.NEXT_PUBLIC_HOTMART_PREMIUM_URL?.trim() || "",
-    premiumEuroMonthly: process.env.NEXT_PUBLIC_HOTMART_PREMIUM_EU_MONTHLY_URL?.trim() || "",
+    standard: process.env.NEXT_PUBLIC_HOTMART_STANDARD_URL?.trim() || HOTMART_BR_CHECKOUT,
+    premium: process.env.NEXT_PUBLIC_HOTMART_PREMIUM_URL?.trim() || HOTMART_BR_CHECKOUT,
+    premiumEuroMonthly:
+      process.env.NEXT_PUBLIC_HOTMART_PREMIUM_EU_MONTHLY_URL?.trim() || HOTMART_BR_CHECKOUT,
     premiumEuroAnnual: withSplit(
-      process.env.NEXT_PUBLIC_HOTMART_PREMIUM_EU_URL?.trim() || "",
+      process.env.NEXT_PUBLIC_HOTMART_PREMIUM_EU_URL?.trim() || HOTMART_BR_CHECKOUT,
       "10",
     ),
     premiumBrAnnual:

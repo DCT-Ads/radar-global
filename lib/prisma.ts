@@ -61,7 +61,9 @@ const globalForPrisma = globalThis as unknown as {
 function createClient() {
   const client = new PrismaClient({
     datasources: {
-      db: { url: withPoolSettings(process.env.DATABASE_URL) },
+      db: {
+        url: withPoolSettings(process.env.RADAR_DATABASE_URL || process.env.DATABASE_URL),
+      },
     },
   });
   return client.$extends({

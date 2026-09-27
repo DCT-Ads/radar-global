@@ -27,7 +27,7 @@
     "loginTitle": "Bienvenido de nuevo",
     "loginSubtitle": "Entra a tu cuenta de Radar.",
     "signupTitle": "Crea tu cuenta",
-    "signupSubtitle": "Empieza a vigilar señales públicas de lanzamiento.",
+    "signupSubtitle": "Crea la cuenta después de suscribirte. Sin pago no hay acceso al Radar.",
     "name": "Nombre",
     "email": "Correo",
     "password": "Contraseña",
@@ -312,6 +312,12 @@
     "unauthorized": "Sesión expirada. Entra de nuevo.",
     "rateLimited": "La API de IA rechazó la solicitud (límite/crédito). Revisa el saldo de Anthropic."
   },
+  "unpaid": {
+    "title": "Esta cuenta todavía no tiene suscripción.",
+    "body": "El Radar se abre después del pago en Hotmart. Elige el plan y suscríbete — crear una cuenta no libera el acceso.",
+    "ctaStandard": "Suscribir Standard",
+    "ctaPremium": "Suscribir Premium"
+  },
   "upgrade": {
     "title": "Mejora a Premium",
     "subtitle": "Desbloquea acceso anticipado y las herramientas de Copy y Asistente.",
@@ -332,9 +338,9 @@
     "backToRadar": "Volver al Radar"
   },
   "oferta": {
-    "kicker": "SaaS para afiliados",
-    "headline": "Ve el lanzamiento en la ventana de oro — antes de la saturación.",
-    "subtitle": "Radar Global monitorea señales públicas de productos digitales y muestra lo que está naciendo, lo que ya está al aire y si el nicho ya se llenó.",
+    "kicker": "Software para afiliados",
+    "headline": "Software que organiza señales públicas de lanzamientos digitales.",
+    "subtitle": "Radar Global reúne datos públicos — dominio, marketplace y certificado — y muestra lo que ya está al aire y el nivel de saturación del nicho. Es una herramienta de software. No es inversión y no promete ingresos.",
     "ctaStandard": "Suscribir Standard",
     "ctaPremium": "Suscribir Premium",
     "ctaLogin": "Ya tengo cuenta",
@@ -342,7 +348,7 @@
     "what1Title": "Señales de lanzamiento",
     "what1Body": "Dominio nuevo, marketplace, certificado y vitrina de launch — en una sola cola.",
     "what2Title": "Saturación visible",
-    "what2Body": "Hot, moderado o saturado. Eliges oferta con dato, no con feeling.",
+    "what2Body": "Clasificación de saturación (hot, moderado o saturado) según las señales recolectadas.",
     "what3Title": "Ficha del productor",
     "what3Body": "Cuando la señal se verifica, ves dominio, evidencia y contacto para afiliarte.",
     "whoTitle": "Para quién es",
@@ -358,7 +364,7 @@
     "premium2": "Acceso a “Aún no lanzó”",
     "premium3": "Copy y Asistente de IA",
     "guaranteeTitle": "Garantía",
-    "guaranteeBody": "7 días para probar. Sin promesa de renta. Herramienta de inteligencia de mercado.",
+    "guaranteeBody": "7 días para probar. Suscripción de software. Sin promesa de ingresos, lucro o resultado financiero.",
     "checkoutPending": "El checkout de Hotmart se está configurando. Mientras tanto, crea tu cuenta en el Radar.",
     "footer": "Radar Global · radar.rotadomilhao.store"
   },
@@ -373,7 +379,7 @@
     "badgeTwelve": "Como en el checkout",
     "equalsTwelve": "O R$ 799,00 al contado",
     "twelveNote": "12× R$ 66,59 / año, el mismo parcelamiento de Hotmart.",
-    "cashNote": "Acceso completo + lanzamientos futuros + visión anticipada.",
+    "cashNote": "Acceso al Radar Premium por el período anual contratado.",
     "cta": "Quiero el Premium anual",
     "footer": "Radar Global · Real · radar.rotadomilhao.store/anual"
   },
@@ -386,7 +392,7 @@
     "equalsTen": "Total R$ 799,99 · Real",
     "orTwelve": "O 12× R$ 66,59 / R$ 799,00 al contado.",
     "b1": "Acceso completo todo el año",
-    "b2": "Lanzamientos futuros y visión anticipada",
+    "b2": "Acceso a la cola de lanzamientos aún no publicados en el Radar",
     "b3": "El mismo Radar Premium, sin pagar 12× el mensual lleno",
     "ctaYes": "Sí, quiero el anual · 10× R$ 79,99",
     "ctaNo": "No, seguir con el mensual",
@@ -426,11 +432,11 @@
     "what1Title": "Señales de lanzamiento",
     "what1Body": "Dominio nuevo, marketplace, certificado y vitrina de launch — en una sola cola.",
     "what2Title": "Saturación visible",
-    "what2Body": "Hot, moderado o saturado. Eliges oferta con dato, no con feeling.",
+    "what2Body": "Clasificación de saturación (hot, moderado o saturado) según las señales recolectadas.",
     "what3Title": "Ficha del productor",
     "what3Body": "Cuando la señal se verifica, ves dominio, evidencia y contacto para afiliarte.",
     "guaranteeTitle": "Garantía",
-    "guaranteeBody": "7 días para probar. Sin promesa de renta. Herramienta de inteligencia de mercado. Precio de esta página: Euro.",
+    "guaranteeBody": "7 días para probar. Suscripción de software. Sin promesa de ingresos, lucro o resultado financiero. Precio de esta página: Euro.",
     "footer": "Radar Global · Euro · radar.rotadomilhao.store/eu"
   },
   "obrigado": {
@@ -446,5 +452,27 @@
     "ctaSignup": "Crear cuenta",
     "ctaLogin": "Ya tengo cuenta",
     "footer": "Radar Global · radar.rotadomilhao.store"
+  },
+  "legal": {
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "refund": "Reembolso",
+    "contact": "Contacto",
+    "back": "Inicio",
+    "privacyLead": "Radar Global trata datos solo para operar la suscripción del software.",
+    "privacyBody1": "Recogemos nombre, correo y datos técnicos de acceso. El pago lo procesa Hotmart; esta página no guarda el número de tarjeta.",
+    "privacyBody2": "No vendemos listas de contactos. Podemos usar el correo para avisos de la cuenta, factura y soporte.",
+    "privacyBody3": "Para corregir o borrar datos, usa la página de Contacto.",
+    "termsLead": "Al suscribirte compras acceso al software Radar Global por el plazo del plan elegido.",
+    "termsBody1": "El Radar organiza señales públicas (dominio, certificado, marketplace). No es consultoría, no es inversión y no garantiza ventas, comisiones ni ingresos.",
+    "termsBody2": "El panel se abre solo después del pago confirmado. Crear una cuenta sin suscribirse no da acceso.",
+    "termsBody3": "El mal uso, la reventa de la cuenta o el intento de acceso sin pago puede cerrar la suscripción.",
+    "refundLead": "Garantía de 7 días para probar el software, según Hotmart y la ley de consumo aplicable.",
+    "refundBody1": "Pide el reembolso en el panel de Hotmart con el correo de la compra.",
+    "refundBody2": "Después de 7 días, la renovación mensual o anual sigue las reglas de Hotmart del plan contratado.",
+    "contactLead": "Radar Global es un software de monitoreo de señales públicas de lanzamientos digitales.",
+    "contactSite": "Sitio:",
+    "contactSocial": "Instagram:",
+    "contactPay": "Dudas de cobro, factura o reembolso: usa el soporte de Hotmart de la compra."
   }
 }

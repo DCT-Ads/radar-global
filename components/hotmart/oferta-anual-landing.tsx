@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { PREMIUM_ANNUAL_BRL } from "@/lib/auth/access";
+import { SalesLegalFooter } from "@/components/hotmart/sales-legal-footer";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
 export async function OfertaAnualLanding() {
@@ -82,6 +83,7 @@ export async function OfertaAnualLanding() {
           className="h-auto w-full rounded-2xl border border-[#1E3A5F] shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
         />
         <p className="mt-10 text-center text-xs text-[#8BA3B8]">{t("footer")}</p>
+        <SalesLegalFooter />
       </section>
     </main>
   );

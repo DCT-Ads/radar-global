@@ -1,9 +1,11 @@
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { assertLocale } from "@/i18n/routing";
+import { hasPaidAccess } from "@/lib/auth/access";
 import { getCurrentUser } from "@/lib/auth/session";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { UnpaidAccessScreen } from "@/components/hotmart/unpaid-access-screen";
 
 type AppLayoutProps = {
   children: React.ReactNode;
@@ -18,6 +20,10 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
   if (!user) {
     redirect({ href: "/login", locale });
     return null;
+  }
+
+  if (!hasPaidAccess(user)) {
+    return <UnpaidAccessScreen />;
   }
 
   return (

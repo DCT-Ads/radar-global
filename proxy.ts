@@ -18,6 +18,10 @@ const publicPathnames = new Set([
   "/obrigado",
   "/obrigado/aguardando",
   "/obrigado/analise",
+  "/privacidade",
+  "/termos",
+  "/reembolso",
+  "/contato",
 ]);
 const authPathnames = new Set(["/login", "/signup"]);
 const brLockedPathnames = new Set([
@@ -27,6 +31,10 @@ const brLockedPathnames = new Set([
   "/upsell",
   "/bem-vindo",
   "/outra-oportunidade",
+  "/privacidade",
+  "/termos",
+  "/reembolso",
+  "/contato",
 ]);
 
 function stripLocale(pathname: string) {

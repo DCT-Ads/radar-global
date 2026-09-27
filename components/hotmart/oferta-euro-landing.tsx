@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { EuroOrderBump } from "@/components/hotmart/euro-order-bump";
+import { SalesLegalFooter } from "@/components/hotmart/sales-legal-footer";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
 export async function OfertaEuroLanding() {
@@ -35,8 +36,8 @@ export async function OfertaEuroLanding() {
         </h1>
         <p className="mt-4 max-w-2xl text-base text-[#8BA3B8] sm:text-lg">{t("subtitle")}</p>
         <EuroOrderBump
-          monthlyHref={checkout.premiumEuroMonthly || "/signup"}
-          annualHref={checkout.premiumEuroAnnual || checkout.premiumEuroMonthly || "/signup"}
+          monthlyHref={checkout.premiumEuroMonthly}
+          annualHref={checkout.premiumEuroAnnual || checkout.premiumEuroMonthly}
           copy={{
             monthlyName: t("monthlyName"),
             monthlyPrice: t("monthlyPrice"),
@@ -97,6 +98,7 @@ export async function OfertaEuroLanding() {
         <h2 className="text-xl font-semibold text-[#D4AF37]">{t("guaranteeTitle")}</h2>
         <p className="mt-2 text-sm text-[#8BA3B8]">{t("guaranteeBody")}</p>
         <p className="mt-10 text-xs text-[#8BA3B8]">{t("footer")}</p>
+        <SalesLegalFooter />
       </section>
     </main>
   );

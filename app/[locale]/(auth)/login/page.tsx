@@ -38,8 +38,8 @@ export default async function LoginPage({ params }: LoginPageProps) {
           <LoginForm />
           <p className="text-center text-sm text-muted-foreground">
             {t("auth.noAccount")}{" "}
-            <Link href="/signup" className="text-primary hover:underline">
-              {t("nav.signup")}
+            <Link href="/" className="text-primary hover:underline">
+              {t("oferta.ctaPremium")}
             </Link>
           </p>
         </CardContent>

@@ -3,6 +3,10 @@ import type { AccessPlan, Role } from "@prisma/client";
 export type AccessUser = {
   role: Role;
   plan: AccessPlan;
+  subscription?: {
+    status: string;
+    plan: { slug: string };
+  } | null;
 };
 
 export const PLAN_PRICES = {
@@ -38,6 +42,17 @@ export const PREMIUM_ANNUAL_EUR = {
   fullYear: "12× € 79,99",
   fullYearTotal: "€ 959,88",
 } as const;
+
+export function hasPaidAccess(user: AccessUser | null | undefined) {
+  if (!user) {
+    return false;
+  }
+  if (user.role === "ADMIN") {
+    return true;
+  }
+  const slug = user.subscription?.plan.slug;
+  return user.subscription?.status === "ACTIVE" && Boolean(slug) && slug !== "FREE";
+}
 
 export function hasPremiumAccess(user: AccessUser | null | undefined) {
   return Boolean(user && (user.role === "ADMIN" || user.plan === "PREMIUM"));

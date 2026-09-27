@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { HotmartSalesFunnel } from "@/components/hotmart/hotmart-sales-funnel";
+import { SalesLegalFooter } from "@/components/hotmart/sales-legal-footer";
 
 export async function UpsellLanding() {
   const t = await getTranslations("upsell");
@@ -45,6 +46,7 @@ export async function UpsellLanding() {
           </Link>
         </div>
         <p className="mt-10 text-xs text-[#8BA3B8]">{t("footer")}</p>
+        <SalesLegalFooter />
       </section>
     </main>
   );

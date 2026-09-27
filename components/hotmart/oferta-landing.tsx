@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { PLAN_PRICES } from "@/lib/auth/access";
+import { SalesLegalFooter } from "@/components/hotmart/sales-legal-footer";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
 function BuyLink({
@@ -69,10 +70,10 @@ export async function OfertaLanding() {
         </h1>
         <p className="mt-4 max-w-2xl text-base text-[#8BA3B8] sm:text-lg">{t("subtitle")}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <BuyLink href={checkout.standard} fallbackHref="/signup">
+          <BuyLink href={checkout.standard} fallbackHref={checkout.standard}>
             {t("ctaStandard")} · {PLAN_PRICES.STANDARD.monthly}
           </BuyLink>
-          <BuyLink href={checkout.premium} fallbackHref="/signup" featured>
+          <BuyLink href={checkout.premium} fallbackHref={checkout.premium} featured>
             {t("ctaPremium")} · {PLAN_PRICES.PREMIUM.monthly}
           </BuyLink>
         </div>
@@ -145,7 +146,7 @@ export async function OfertaLanding() {
               <li>✓ {t("standard3")}</li>
             </ul>
             <div className="mt-6">
-              <BuyLink href={checkout.standard} fallbackHref="/signup">
+              <BuyLink href={checkout.standard} fallbackHref={checkout.standard}>
                 {t("ctaStandard")}
               </BuyLink>
             </div>
@@ -160,7 +161,7 @@ export async function OfertaLanding() {
               <li>✓ {t("premium3")}</li>
             </ul>
             <div className="mt-6">
-              <BuyLink href={checkout.premium} fallbackHref="/signup" featured>
+              <BuyLink href={checkout.premium} fallbackHref={checkout.premium} featured>
                 {t("ctaPremium")}
               </BuyLink>
             </div>
@@ -177,6 +178,7 @@ export async function OfertaLanding() {
           </Button>
         </div>
         <p className="mt-10 text-xs text-[#8BA3B8]">{t("footer")}</p>
+        <SalesLegalFooter />
       </section>
     </main>
   );
