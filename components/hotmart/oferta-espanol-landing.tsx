@@ -92,9 +92,42 @@ export async function OfertaEspanolLanding() {
         />
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-8">
+      <section className="mx-auto max-w-5xl px-6 pb-12">
         <h2 className="text-center text-2xl font-semibold text-[#D4AF37]">{t("whoTitle")}</h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-[#8BA3B8]">{t("whoBody")}</p>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-12">
+        <h2 className="mb-4 text-center text-2xl font-semibold text-[#D4AF37]">{t("isTitle")}</h2>
+        <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-[#8BA3B8]">{t("isBody")}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
+            <h3 className="text-lg font-semibold text-[#D4AF37]">{t("isNotTitle")}</h3>
+            <ul className="mt-3 space-y-2 text-sm text-[#8BA3B8]">
+              <li>— {t("isNot1")}</li>
+              <li>— {t("isNot2")}</li>
+              <li>— {t("isNot3")}</li>
+              <li>— {t("isNot4")}</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
+            <h3 className="text-lg font-semibold text-[#D4AF37]">{t("howTitle")}</h3>
+            <ol className="mt-3 space-y-3 text-sm text-[#8BA3B8]">
+              <li>
+                <span className="font-semibold text-[#F5F7FA]">1. {t("how1Title")}</span>
+                <p className="mt-1">{t("how1Body")}</p>
+              </li>
+              <li>
+                <span className="font-semibold text-[#F5F7FA]">2. {t("how2Title")}</span>
+                <p className="mt-1">{t("how2Body")}</p>
+              </li>
+              <li>
+                <span className="font-semibold text-[#F5F7FA]">3. {t("how3Title")}</span>
+                <p className="mt-1">{t("how3Body")}</p>
+              </li>
+            </ol>
+          </div>
+        </div>
       </section>
 
       <section id="planos" className="mx-auto max-w-5xl px-6 pb-12">
@@ -111,6 +144,7 @@ export async function OfertaEspanolLanding() {
           <p className="mt-1 text-xs text-[#8BA3B8]">{PREMIUM_EUR_PROMO.cashNote}</p>
           <p className="text-xs text-[#8BA3B8]">{PREMIUM_EUR_PROMO.untilCancel}</p>
           <p className="mt-4 text-sm text-[#F5F7FA]">{t("premiumBody")}</p>
+          <p className="mt-3 text-xs text-[#8BA3B8]">{t("honestNote")}</p>
           <ul className="mt-4 space-y-2 text-sm text-[#F5F7FA]">
             <li>✓ {t("premium1")}</li>
             <li>✓ {t("premium2")}</li>
@@ -124,9 +158,37 @@ export async function OfertaEspanolLanding() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-3xl px-6 pb-12">
+        <h2 className="text-center text-2xl font-semibold text-[#D4AF37]">{t("faqTitle")}</h2>
+        <div className="mt-6 space-y-4 text-left">
+          <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
+            <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq1Q")}</h3>
+            <p className="mt-2 text-sm text-[#8BA3B8]">{t("faq1A")}</p>
+          </div>
+          <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
+            <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq2Q")}</h3>
+            <p className="mt-2 text-sm text-[#8BA3B8]">{t("faq2A")}</p>
+          </div>
+          <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
+            <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq3Q")}</h3>
+            <p className="mt-2 text-sm text-[#8BA3B8]">{t("faq3A")}</p>
+          </div>
+          <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
+            <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq4Q")}</h3>
+            <p className="mt-2 text-sm text-[#8BA3B8]">{t("faq4A")}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-6 pb-12 text-center">
+        <h2 className="text-xl font-semibold text-[#D4AF37]">{t("companyTitle")}</h2>
+        <p className="mt-2 text-sm text-[#8BA3B8]">{t("companyBody")}</p>
+      </section>
+
       <section className="mx-auto max-w-3xl px-6 pb-16 text-center">
         <h2 className="text-xl font-semibold text-[#D4AF37]">{t("guaranteeTitle")}</h2>
         <p className="mt-2 text-sm text-[#8BA3B8]">{t("guaranteeBody")}</p>
+        <p className="mt-2 text-sm text-[#8BA3B8]">{t("refundOnPage")}</p>
         <div className="mt-6">
           <Button asChild variant="outline">
             <Link href="/login">{t("ctaLogin")}</Link>
