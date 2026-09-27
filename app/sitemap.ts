@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/contato",
     "/anual",
     "/eu",
+    "/espanol",
   ];
   return paths.map((path) => ({
     url: `${BASE}${path}`,

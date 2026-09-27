@@ -31,6 +31,15 @@ export const PREMIUM_EUR = {
   monthlyLabel: "€ 79,99 / mês",
 } as const;
 
+/** Premium promoción en español: € 227,50 / mes al contado, hasta cancelar. */
+export const PREMIUM_EUR_PROMO = {
+  currency: "EUR",
+  monthly: "€ 227,50",
+  monthlyLabel: "€ 227,50 / mes",
+  cashNote: "Mensual · al contado",
+  untilCancel: "Hasta que el cliente cancele",
+} as const;
+
 export const PREMIUM_ANNUAL_EUR = {
   currency: "EUR",
   currencyLabel: "Euro",
