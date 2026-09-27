@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Radar Global — Premium",
     description: "Promoción Premium mensual: € 227,50 al contado. Hasta que canceles.",
-    images: ["/brand/capa-produto.png"],
+    images: ["/brand/capa-produto-es.png"],
   },
 };
 

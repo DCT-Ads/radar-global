@@ -24,7 +24,7 @@ export async function OfertaEspanolLanding() {
 
       <section className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pb-12 pt-4 text-center">
         <Image
-          src="/brand/capa-produto.png"
+          src="/brand/capa-produto-es.png"
           alt={home("coverAlt")}
           width={640}
           height={640}
