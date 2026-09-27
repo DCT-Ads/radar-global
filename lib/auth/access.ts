@@ -40,6 +40,15 @@ export const PREMIUM_EUR_79 = {
   untilCancel: "Hasta que el cliente cancele",
 } as const;
 
+/** Anual do mesmo SaaS em espanhol: 10× € 79,90 = € 799,00 (2 meses gratis). */
+export const PREMIUM_EUR_79_ANNUAL = {
+  currency: "EUR",
+  installment: "10× € 79,90",
+  total: "€ 799,00",
+  fullYear: "12× € 79,90",
+  fullYearTotal: "€ 958,80",
+} as const;
+
 /** Premium promoción en español: € 227,50 / mes al contado, hasta cancelar. */
 export const PREMIUM_EUR_PROMO = {
   currency: "EUR",

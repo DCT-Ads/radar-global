@@ -21,6 +21,9 @@ export function hotmartCheckoutUrls() {
     premiumEs79:
       process.env.NEXT_PUBLIC_HOTMART_ES_79_URL?.trim() ||
       "https://pay.hotmart.com/B107672953D?off=vzd6xfcl&checkoutMode=10",
+    premiumEsAnnual:
+      process.env.NEXT_PUBLIC_HOTMART_ES_ANNUAL_URL?.trim() ||
+      "https://pay.hotmart.com/B107672953D?off=b8flpvap&checkoutMode=10",
   };
 }
 

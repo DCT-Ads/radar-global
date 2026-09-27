@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { EspanolOrderBump } from "@/components/hotmart/espanol-order-bump";
 import { PREMIUM_EUR_79, PREMIUM_EUR_PROMO } from "@/lib/auth/access";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
@@ -17,8 +18,10 @@ export async function OfertaEspanolLanding({
   const home = await getTranslations("home");
   const checkout = hotmartCheckoutUrls();
   const href = variant === "promo227" ? checkout.premiumEsPromo : checkout.premiumEs79;
+  const annualHref = checkout.premiumEsAnnual;
   const price = variant === "promo227" ? PREMIUM_EUR_PROMO : PREMIUM_EUR_79;
   const showPressle = variant !== "mensual79";
+  const showBump = variant !== "promo227";
   const ctaClass =
     "inline-flex h-11 items-center justify-center rounded-md bg-[#D4AF37] px-6 text-sm font-semibold text-[#0B1C33] hover:bg-[#D4AF37]/90";
 
@@ -160,11 +163,27 @@ export async function OfertaEspanolLanding({
             <li>✓ {t("premium2")}</li>
             <li>✓ {t("premium3")}</li>
           </ul>
-          <div className="mt-6">
-            <a href={href} className={ctaClass}>
-              {t("cta")}
-            </a>
-          </div>
+          {showBump ? (
+            <EspanolOrderBump
+              monthlyHref={href}
+              annualHref={annualHref}
+              copy={{
+                bumpBadge: t("bumpBadge"),
+                bumpTitle: t("bumpTitle"),
+                bumpBody: t("bumpBody"),
+                bumpWas: t("bumpWas"),
+                bumpTotal: t("bumpTotal"),
+                ctaMonthly: t("ctaMonthly"),
+                ctaBump: t("ctaBump"),
+              }}
+            />
+          ) : (
+            <div className="mt-6">
+              <a href={href} className={ctaClass}>
+                {t("cta")}
+              </a>
+            </div>
+          )}
         </div>
       </section>
 
