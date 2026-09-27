@@ -18,6 +18,8 @@ export function hotmartCheckoutUrls() {
     premiumEsPromo:
       process.env.NEXT_PUBLIC_HOTMART_PREMIUM_ES_URL?.trim() ||
       "https://pay.hotmart.com/B107672953D?off=vzd6xfcl&checkoutMode=10",
+    premiumEs79:
+      process.env.NEXT_PUBLIC_HOTMART_ES_79_URL?.trim() || HOTMART_BR_CHECKOUT,
   };
 }
 

@@ -14,6 +14,8 @@ const publicPathnames = new Set([
   "/upsell",
   "/eu",
   "/espanol",
+  "/mensual",
+  "/pressle",
   "/bem-vindo",
   "/outra-oportunidade",
   "/obrigado",

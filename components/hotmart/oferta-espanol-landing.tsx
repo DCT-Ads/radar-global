@@ -2,13 +2,23 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { PREMIUM_EUR_PROMO } from "@/lib/auth/access";
+import { PREMIUM_EUR_79, PREMIUM_EUR_PROMO } from "@/lib/auth/access";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
-export async function OfertaEspanolLanding() {
-  const t = await getTranslations("ofertaEspanol");
+type EspanolVariant = "promo227" | "mensual79" | "pressle79";
+
+export async function OfertaEspanolLanding({
+  variant = "promo227",
+}: {
+  variant?: EspanolVariant;
+}) {
+  const ns = variant === "promo227" ? "ofertaEspanol" : "ofertaEspanol79";
+  const t = await getTranslations(ns);
   const home = await getTranslations("home");
-  const href = hotmartCheckoutUrls().premiumEsPromo;
+  const checkout = hotmartCheckoutUrls();
+  const href = variant === "promo227" ? checkout.premiumEsPromo : checkout.premiumEs79;
+  const price = variant === "promo227" ? PREMIUM_EUR_PROMO : PREMIUM_EUR_79;
+  const showPressle = variant !== "mensual79";
   const ctaClass =
     "inline-flex h-11 items-center justify-center rounded-md bg-[#D4AF37] px-6 text-sm font-semibold text-[#0B1C33] hover:bg-[#D4AF37]/90";
 
@@ -40,7 +50,7 @@ export async function OfertaEspanolLanding() {
         <p className="mt-4 max-w-2xl text-base text-[#8BA3B8] sm:text-lg">{t("subtitle")}</p>
         <div className="mt-8">
           <a href={href} className={ctaClass}>
-            {t("cta")} · {PREMIUM_EUR_PROMO.monthlyLabel}
+            {t("cta")} · {price.monthlyLabel}
           </a>
         </div>
       </section>
@@ -97,7 +107,7 @@ export async function OfertaEspanolLanding() {
         <p className="mx-auto mt-3 max-w-2xl text-center text-[#8BA3B8]">{t("whoBody")}</p>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-12">
+      {showPressle ? <section className="mx-auto max-w-5xl px-6 pb-12">
         <h2 className="mb-4 text-center text-2xl font-semibold text-[#D4AF37]">{t("isTitle")}</h2>
         <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-[#8BA3B8]">{t("isBody")}</p>
         <div className="grid gap-4 md:grid-cols-2">
@@ -128,7 +138,7 @@ export async function OfertaEspanolLanding() {
             </ol>
           </div>
         </div>
-      </section>
+      </section> : null}
 
       <section id="planos" className="mx-auto max-w-5xl px-6 pb-12">
         <h2 className="mb-4 text-center text-2xl font-semibold text-[#D4AF37]">
@@ -139,10 +149,10 @@ export async function OfertaEspanolLanding() {
             {t("promoBadge")}
           </p>
           <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">{t("premiumName")}</h3>
-          <p className="mt-2 text-3xl font-semibold">{PREMIUM_EUR_PROMO.monthly}</p>
+          <p className="mt-2 text-3xl font-semibold">{price.monthly}</p>
           <p className="text-xs text-[#8BA3B8]">{t("perMonth")}</p>
-          <p className="mt-1 text-xs text-[#8BA3B8]">{PREMIUM_EUR_PROMO.cashNote}</p>
-          <p className="text-xs text-[#8BA3B8]">{PREMIUM_EUR_PROMO.untilCancel}</p>
+          <p className="mt-1 text-xs text-[#8BA3B8]">{price.cashNote}</p>
+          <p className="text-xs text-[#8BA3B8]">{price.untilCancel}</p>
           <p className="mt-4 text-sm text-[#F5F7FA]">{t("premiumBody")}</p>
           <p className="mt-3 text-xs text-[#8BA3B8]">{t("honestNote")}</p>
           <ul className="mt-4 space-y-2 text-sm text-[#F5F7FA]">
@@ -158,6 +168,8 @@ export async function OfertaEspanolLanding() {
         </div>
       </section>
 
+      {showPressle ? (
+        <>
       <section className="mx-auto max-w-3xl px-6 pb-12">
         <h2 className="text-center text-2xl font-semibold text-[#D4AF37]">{t("faqTitle")}</h2>
         <div className="mt-6 space-y-4 text-left">
@@ -184,6 +196,8 @@ export async function OfertaEspanolLanding() {
         <h2 className="text-xl font-semibold text-[#D4AF37]">{t("companyTitle")}</h2>
         <p className="mt-2 text-sm text-[#8BA3B8]">{t("companyBody")}</p>
       </section>
+        </>
+      ) : null}
 
       <section className="mx-auto max-w-3xl px-6 pb-16 text-center">
         <h2 className="text-xl font-semibold text-[#D4AF37]">{t("guaranteeTitle")}</h2>
@@ -194,7 +208,15 @@ export async function OfertaEspanolLanding() {
             <Link href="/login">{t("ctaLogin")}</Link>
           </Button>
         </div>
-        <p className="mt-10 text-xs text-[#8BA3B8]">{t("footer")}</p>
+        <p className="mt-10 text-xs text-[#8BA3B8]">
+          {t(
+            variant === "pressle79"
+              ? "footerPressle"
+              : variant === "mensual79"
+                ? "footerMensual"
+                : "footer",
+          )}
+        </p>
         <nav className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-[#8BA3B8]">
           <Link href="/privacidade" className="hover:text-[#D4AF37]">
             Privacidad
