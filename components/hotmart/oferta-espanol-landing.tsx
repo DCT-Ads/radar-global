@@ -39,7 +39,7 @@ export async function OfertaEspanolLanding() {
         </h1>
         <p className="mt-4 max-w-2xl text-base text-[#8BA3B8] sm:text-lg">{t("subtitle")}</p>
         <div className="mt-8">
-          <a href={href} className={ctaClass} target="_blank" rel="noreferrer">
+          <a href={href} className={ctaClass}>
             {t("cta")} · {PREMIUM_EUR_PROMO.monthlyLabel}
           </a>
         </div>
@@ -151,7 +151,7 @@ export async function OfertaEspanolLanding() {
             <li>✓ {t("premium3")}</li>
           </ul>
           <div className="mt-6">
-            <a href={href} className={ctaClass} target="_blank" rel="noreferrer">
+            <a href={href} className={ctaClass}>
               {t("cta")}
             </a>
           </div>

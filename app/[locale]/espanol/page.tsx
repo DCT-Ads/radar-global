@@ -5,7 +5,7 @@ import { OfertaEspanolLanding } from "@/components/hotmart/oferta-espanol-landin
 export const metadata: Metadata = {
   title: "Radar Global — Premium",
   description:
-    "Software de monitoreo de señales públicas de lanzamientos. Suscripción Premium € 227,50 / mes. Sin promesa de ingresos.",
+    "SaaS de monitoreo de lanzamientos. Suscripción Premium € 227,50 / mes. Sin promesa de ingresos.",
   openGraph: {
     title: "Radar Global — Premium",
     description: "Promoción Premium mensual: € 227,50 al contado. Hasta que canceles.",
