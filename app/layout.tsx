@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { GoogleTag } from "@/components/analytics/google-tag";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -71,6 +72,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <GoogleTag />
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
           <Toaster />
