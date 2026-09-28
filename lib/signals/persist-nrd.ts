@@ -8,7 +8,7 @@ import {
   resolveSignalTimelineDates,
   trustedRegisteredAtFromRaw,
 } from "@/lib/signals/whois-registered-at";
-import { NRD_SOURCE, type NrdHit } from "@/lib/collectors/nrd";
+import { NRD_SOURCE, type NrdHit } from "@/lib/collectors/nrd-source";
 
 export type UpsertNrdOptions = {
   now?: Date;

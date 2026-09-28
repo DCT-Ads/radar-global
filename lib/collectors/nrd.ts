@@ -1,19 +1,10 @@
-import "server-only";
 import { inflateRawSync, gunzipSync } from "node:zlib";
 import { ALL_KEYWORDS, nicheForKeyword } from "@/lib/niches";
 import { cleanHost, domainIncludesKeyword } from "./domains";
 import { emptyDropStats, type CollectorDropStats } from "./drop-stats";
+import { type NrdHit } from "./nrd-source";
 
-export { NRD_SOURCE } from "./nrd-source";
-
-export type NrdHit = {
-  domain: string;
-  keyword: string;
-  niche: string;
-  listDate: string;
-  /** WHOIS/RDAP Creation Date only. Never the WhoisDS list day. */
-  registeredAt?: Date | null;
-};
+export { NRD_SOURCE, type NrdHit } from "./nrd-source";
 
 function utcDate(daysAgo: number): Date {
   const date = new Date();

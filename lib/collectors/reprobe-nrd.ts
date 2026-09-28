@@ -1,6 +1,6 @@
 import type { Prisma, SignalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { NRD_SOURCE } from "@/lib/collectors/nrd";
+import { NRD_SOURCE } from "@/lib/collectors/nrd-source";
 import { CRTSH_SOURCE } from "@/lib/signals/persist-crtsh";
 import { persistLandingReprobe } from "@/lib/collectors/persist";
 import { probeLanding, type ProbePathResult } from "@/lib/collectors/http-probe";

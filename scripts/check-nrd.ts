@@ -3,7 +3,7 @@ import {
   isUpcomingSignal,
   landingLiveFromRaw,
 } from "../lib/signals/saturation";
-import { NRD_SOURCE } from "../lib/collectors/nrd";
+import { NRD_SOURCE } from "../lib/collectors/nrd-source";
 
 async function main() {
   const signals = await prisma.signal.findMany({
