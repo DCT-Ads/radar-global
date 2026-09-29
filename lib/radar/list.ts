@@ -1,8 +1,9 @@
+import type { Prisma } from "@prisma/client";
 import { ageInDays } from "@/lib/collectors/domains";
 import { prisma } from "@/lib/prisma";
 import { firstSeenAtFromLaunch, uniqueEvidenceCount } from "@/lib/radar/first-seen";
 import { computeEarlySignal, goldenWindowRank } from "@/lib/scoring/early-signal";
-import { loadKeywordVolumeIndex } from "@/lib/signals/keyword-volume";
+import { loadKeywordVolumeIndex, type KeywordVolumeIndex } from "@/lib/signals/keyword-volume";
 import {
   getSaturationLevel,
   isUpcomingLaunch,
@@ -25,7 +26,87 @@ export type RadarLaunchRow = {
   keyword: string | null;
   evidenceCount: number;
   goldenWindow: number;
+  verified: boolean;
 };
+
+export const radarLaunchInclude = {
+  producer: { select: { id: true, name: true, domain: true } },
+  evidences: {
+    include: { source: true },
+    orderBy: { capturedAt: "desc" as const },
+  },
+  signals: {
+    where: { status: "VERIFIED" as const },
+    orderBy: { discoveredAt: "desc" as const },
+    include: { evidences: { select: { id: true } } },
+  },
+} satisfies Prisma.LaunchInclude;
+
+export type LaunchForRadarRow = Prisma.LaunchGetPayload<{ include: typeof radarLaunchInclude }>;
+
+export function toRadarLaunchRow(
+  launch: LaunchForRadarRow,
+  volumes: Pick<KeywordVolumeIndex, "byKeyword" | "median" | "p75">,
+): RadarLaunchRow {
+  const firstSeenAt = firstSeenAtFromLaunch({
+    firstSeenAt: launch.firstSeenAt,
+    signals: launch.signals,
+  });
+  const evidenceCount = uniqueEvidenceCount(
+    launch.evidences,
+    launch.signals.flatMap((signal) => signal.evidences),
+  );
+  const scored = computeEarlySignal({
+    firstSeenAt,
+    evidences: launch.evidences.map((evidence) => ({
+      capturedAt: evidence.capturedAt,
+      url: evidence.url,
+      type: evidence.type,
+      sourceSlug: evidence.source.slug,
+      sourceReliability: evidence.source.reliability,
+    })),
+    signals: launch.signals.map((signal) => ({
+      source: signal.source,
+      rawData: signal.rawData,
+    })),
+  });
+
+  const latestSignal = launch.signals[0];
+  const keyword = latestSignal?.keyword ?? launch.niche ?? null;
+  const saturation = getSaturationLevel({
+    keyword,
+    keywordVolume: keyword ? (volumes.byKeyword[keyword] ?? 1) : 0,
+    medianVolume: volumes.median,
+    p75Volume: volumes.p75,
+    confidence: latestSignal?.confidence ?? 0,
+    firstSeenDaysAgo: ageInDays(firstSeenAt),
+  });
+  const upcoming = launch.signals.some((signal) =>
+    isUpcomingLaunch({
+      source: signal.source,
+      landingLive: landingLiveFromRaw(signal.rawData),
+    }),
+  );
+  const daysAgo = ageInDays(firstSeenAt);
+
+  return {
+    id: launch.id,
+    title: launch.title,
+    domain: launch.domain,
+    niche: launch.niche,
+    firstSeenAt,
+    producer: launch.producer,
+    earlySignal: scored.earlySignal,
+    dataQuality: scored.dataQuality,
+    confidence: scored.confidence,
+    saturation,
+    upcoming,
+    keyword,
+    evidenceCount,
+    goldenWindow: goldenWindowRank(scored.earlySignal, saturation, daysAgo),
+    verified: launch.signals.length > 0,
+  };
+}
 
 export async function listVerifiedRadarLaunches(options?: {
   includeUpcoming?: boolean;
@@ -35,81 +116,11 @@ export async function listVerifiedRadarLaunches(options?: {
       evidences: { some: {} },
       signals: { some: { status: "VERIFIED" } },
     },
-    include: {
-      producer: { select: { id: true, name: true, domain: true } },
-      evidences: {
-        include: { source: true },
-        orderBy: { capturedAt: "desc" },
-      },
-      signals: {
-        where: { status: "VERIFIED" },
-        orderBy: { discoveredAt: "desc" },
-        include: { evidences: { select: { id: true } } },
-      },
-    },
+    include: radarLaunchInclude,
   });
 
-  const { byKeyword, median, p75 } = await loadKeywordVolumeIndex();
-
-  const rows = launches.map((launch) => {
-    const firstSeenAt = firstSeenAtFromLaunch({
-      firstSeenAt: launch.firstSeenAt,
-      signals: launch.signals,
-    });
-    const evidenceCount = uniqueEvidenceCount(
-      launch.evidences,
-      launch.signals.flatMap((signal) => signal.evidences),
-    );
-    const scored = computeEarlySignal({
-      firstSeenAt,
-      evidences: launch.evidences.map((evidence) => ({
-        capturedAt: evidence.capturedAt,
-        url: evidence.url,
-        type: evidence.type,
-        sourceSlug: evidence.source.slug,
-        sourceReliability: evidence.source.reliability,
-      })),
-      signals: launch.signals.map((signal) => ({
-        source: signal.source,
-        rawData: signal.rawData,
-      })),
-    });
-
-    const latestSignal = launch.signals[0];
-    const keyword = latestSignal?.keyword ?? launch.niche ?? null;
-    const saturation = getSaturationLevel({
-      keyword,
-      keywordVolume: keyword ? (byKeyword[keyword] ?? 1) : 0,
-      medianVolume: median,
-      p75Volume: p75,
-      confidence: latestSignal?.confidence ?? 0,
-      firstSeenDaysAgo: ageInDays(firstSeenAt),
-    });
-    const upcoming = launch.signals.some((signal) =>
-      isUpcomingLaunch({
-        source: signal.source,
-        landingLive: landingLiveFromRaw(signal.rawData),
-      }),
-    );
-    const daysAgo = ageInDays(firstSeenAt);
-
-    return {
-      id: launch.id,
-      title: launch.title,
-      domain: launch.domain,
-      niche: launch.niche,
-      firstSeenAt,
-      producer: launch.producer,
-      earlySignal: scored.earlySignal,
-      dataQuality: scored.dataQuality,
-      confidence: scored.confidence,
-      saturation,
-      upcoming,
-      keyword,
-      evidenceCount,
-      goldenWindow: goldenWindowRank(scored.earlySignal, saturation, daysAgo),
-    };
-  });
+  const volumes = await loadKeywordVolumeIndex();
+  const rows = launches.map((launch) => toRadarLaunchRow(launch, volumes));
 
   const visible = options?.includeUpcoming
     ? rows

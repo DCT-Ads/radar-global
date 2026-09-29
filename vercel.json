@@ -15,5 +15,11 @@
       "destination": "https://radar.rotadomilhao.store/$1",
       "permanent": true
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/weekly-summary",
+      "schedule": "0 11 * * 1"
+    }
   ]
 }
