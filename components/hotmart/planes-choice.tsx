@@ -77,12 +77,12 @@ export function PlanesChoice({
         }
       >
         {showStandard ? (
-          <button type="button" className={placement === "premium" ? outlineButton : goldButton} onClick={() => setOpen("standard")}>
+          <button type="button" className={goldButton} onClick={() => setOpen("standard")}>
             {standard.button}
           </button>
         ) : null}
         {showPremium ? (
-          <button type="button" className={placement === "standard" ? outlineButton : goldButton} onClick={() => setOpen("premium")}>
+          <button type="button" className={goldButton} onClick={() => setOpen("premium")}>
             {premium.button}
           </button>
         ) : null}
