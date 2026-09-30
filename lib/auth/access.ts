@@ -31,6 +31,24 @@ export const PREMIUM_EUR = {
   monthlyLabel: "€ 79,99 / mês",
 } as const;
 
+/** Standard Europa (campanha em espanhol): 45,50 € / mes, hasta cancelar. */
+export const STANDARD_EUR = {
+  currency: "EUR",
+  monthly: "45,50 €",
+  monthlyLabel: "45,50 € / mes",
+  cashNote: "Mensual · al contado",
+  untilCancel: "Hasta que el cliente cancele",
+} as const;
+
+/** Standard anual: 10 × 45,50 € = 455,00 € (12 meses). 12 × 45,50 € = 546,00 €. */
+export const STANDARD_EUR_ANNUAL = {
+  currency: "EUR",
+  total: "455,00 €",
+  totalLabel: "455,00 € / año",
+  was: "546,00 €",
+  save: "91,00 €",
+} as const;
+
 /** Premium mensal em espanhol: € 79,90 / mes, hasta cancelar. */
 export const PREMIUM_EUR_79 = {
   currency: "EUR",

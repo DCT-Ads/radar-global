@@ -14,6 +14,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/espanol",
     "/mensual",
     "/pressle",
+    "/pressle-3",
+    "/standard",
     "/gracias",
     "/bienvenido",
     "/mas-tarde",

@@ -24,6 +24,12 @@ export function hotmartCheckoutUrls() {
     premiumEsAnnual:
       process.env.NEXT_PUBLIC_HOTMART_ES_ANNUAL_URL?.trim() ||
       "https://pay.hotmart.com/B107672953D?off=b8flpvap&checkoutMode=10",
+    standardEs:
+      process.env.NEXT_PUBLIC_HOTMART_ES_STANDARD_URL?.trim() ||
+      "https://pay.hotmart.com/B107672953D?off=oc5d4edg&checkoutMode=10",
+    standardEsAnnual:
+      process.env.NEXT_PUBLIC_HOTMART_ES_STANDARD_ANNUAL_URL?.trim() ||
+      "https://pay.hotmart.com/B107672953D?off=s96p6m7e&checkoutMode=10",
   };
 }
 

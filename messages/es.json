@@ -17,8 +17,11 @@
     "logout": "Salir",
     "explore": "Explorar el Radar",
     "radar": "Radar",
+    "monitorados": "Mis Monitorizados",
     "copy": "Copy",
     "chat": "Asistente",
+    "oportunidades": "Radar de Oportunidades",
+    "menteVisionaria": "Mente Visionaria",
     "locked": "Función Premium",
     "planStandard": "Standard",
     "planPremium": "Premium"
@@ -37,7 +40,20 @@
     "noAccount": "¿Aún no tienes cuenta?",
     "invalidCredentials": "Correo o contraseña inválidos.",
     "emailTaken": "Este correo ya está registrado.",
-    "genericError": "Algo salió mal. Inténtalo de nuevo."
+    "genericError": "Algo salió mal. Inténtalo de nuevo.",
+    "forgotLink": "Olvidé la contraseña",
+    "forgotTitle": "Restablecer contraseña",
+    "forgotSubtitle": "Indica el correo de la cuenta. Si existe, enviamos un enlace válido por 1 hora.",
+    "forgotSubmit": "Enviar enlace",
+    "forgotSent": "Si ese correo está registrado, el enlace ya fue enviado. Revisa la bandeja y el spam.",
+    "resetTitle": "Nueva contraseña",
+    "resetSubtitle": "Elige una contraseña de al menos 8 caracteres.",
+    "resetSubmit": "Guardar contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "resetInvalid": "Este enlace no es válido o ya caducó. Pide uno nuevo.",
+    "backToLogin": "Volver al inicio de sesión"
   },
   "dashboard": {
     "title": "Panel",
@@ -266,6 +282,7 @@
     "launches": "Lanzamientos",
     "producer": "Productor",
     "openLaunch": "Abrir ficha",
+    "generateCopy": "Generar Copy",
     "backToRadar": "Volver al Radar",
     "satSaturated": "Saturado",
     "satWarning": "Moderado",
@@ -282,7 +299,21 @@
     "contactX": "X",
     "contactCompany": "Empresa",
     "contactCommission": "Comisión del afiliado",
-    "contactNotInformed": "no informado"
+    "contactNotInformed": "no informado",
+    "verified": "✅ Verificado por Radar",
+    "verifiedHint": "Este lanzamiento fue revisado manualmente por nuestro equipo antes de entrar en el Radar."
+  },
+  "monitorados": {
+    "title": "Mis Monitorizados",
+    "subtitle": "Lanzamientos que guardaste en el Radar. Mira qué cambió esta semana.",
+    "empty": "Aún no hay lanzamientos monitorizados. En el Radar, toca la estrella para seguir uno.",
+    "goToRadar": "Ir al Radar",
+    "add": "Monitorizar este lanzamiento",
+    "remove": "Dejar de monitorizar",
+    "savedAt": "Guardado",
+    "updatedThisWeek": "Actualizado esta semana",
+    "updatedSinceSave": "Cambió desde que lo guardaste",
+    "noChange": "Sin cambios desde que lo guardaste"
   },
   "copy": {
     "title": "Copy",
@@ -304,6 +335,9 @@
   },
   "chat": {
     "title": "Asistente IA",
+    "subtitle": "Respuestas con los datos reales de señales del Radar.",
+    "you": "Tú",
+    "assistant": "Asistente",
     "placeholder": "Escribe tu mensaje...",
     "send": "Enviar",
     "loading": "Pensando...",
@@ -574,6 +608,106 @@
     "footerMensual": "Radar Global · Euro · radar.rotadomilhao.store/mensual",
     "footerPressle": "Radar Global · Euro · radar.rotadomilhao.store/pressle"
   },
+  "ofertaStandardEs": {
+    "lock": "Euro · Español",
+    "kicker": "SaaS para afiliados",
+    "headline": "Las señales públicas del nicho ya están en el panel. ¿Las lees antes de la saturación?",
+    "subtitle": "Radar Global organiza alertas públicas de lanzamientos digitales, con lectura de saturación por nicho. Es un SaaS de análisis. No es inversión y no promete ingresos.",
+    "cta": "Quiero acceder al Radar Global",
+    "ctaLogin": "Ya tengo cuenta",
+    "ctaMonthly": "Suscribir Standard mensual",
+    "ctaAnnual": "Suscribir Standard anual",
+    "ctaFinal": "Quiero acceso al Radar Global ahora",
+    "problemTitle": "Elegir nicho o producto, hoy, suele hacerse así",
+    "problem1": "Decidir por lo que “todo el mundo” está haciendo",
+    "problem2": "Ver la oportunidad cuando el nicho ya está saturado",
+    "problem3": "Horas juntando información suelta en grupos y redes",
+    "problem4": "Cerrar la decisión con la mente cansada, al final del día",
+    "problemClose": "Eso cuesta tiempo. En el digital, el tiempo es el recurso que no se repone.",
+    "solutionTitle": "Radar Global ordena datos dispersos en una lectura clara",
+    "solutionBody": "La plataforma sigue lanzamientos digitales públicos y los deja en un panel simple.",
+    "feat1Title": "Lectura del lanzamiento",
+    "feat1Body": "Evidencia pública: página activa, checkout y tiempo desde la primera detección.",
+    "feat2Title": "Radar de oportunidades",
+    "feat2Body": "El nicho se clasifica como hot, moderado o saturado, según las señales recogidas.",
+    "feat3Title": "Panel de señales",
+    "feat3Body": "La cola junta lo que ya está al aire, con la evidencia disponible en un solo lugar.",
+    "feat4Title": "Mente Visionaria",
+    "feat4Body": "Neuro-Check, audio de foco y alerta de sesgo, para leer el panel con más claridad.",
+    "bridge1": "No te estoy diciendo que vas a hacerte rico de la noche a la mañana. La idea es simple: quien llega primero, bebe agua limpia. 🐬",
+    "bridge2": "Mientras los tiburones disputan la misma agua sucia y saturada, tú ya entraste antes, nadando a largas brazadas, tranquilo. 🐋💦💧",
+    "bridgeNote": "Es una imagen sobre el momento de entrar al nicho. El Radar organiza datos públicos y no promete ingresos.",
+    "howTitle": "Cómo funciona",
+    "how1Title": "Ves la señal",
+    "how1Body": "El Radar muestra lanzamientos con evidencia real: landing activa, checkout y tiempo desde la primera detección.",
+    "how2Title": "Lees el escenario",
+    "how2Body": "Saturación del nicho y la lectura del lanzamiento, juntas en el mismo panel.",
+    "how3Title": "Decides tú",
+    "how3Body": "El software no elige la oferta. Tú revisas la ficha y actúas. El resultado depende de tu trabajo y del mercado.",
+    "isTitle": "Qué estás comprando",
+    "isBody": "Una suscripción de SaaS del plan Standard. Pagas acceso al panel Radar Global. El mensual se cobra al contado, hasta que canceles. El anual es un pago de 455,00 € por 12 meses.",
+    "isNotTitle": "Esto no es",
+    "isNot1": "No es una promesa de dinero, renta o estilo de vida.",
+    "isNot2": "No es inversión, trading, bolsa ni señal de compra de activos.",
+    "isNot3": "No es un curso de dinero fácil ni una venta garantizada.",
+    "isNot4": "No incluye el generador de copy ni el asistente de IA. Esas herramientas son del plan Premium.",
+    "mindTitle": "Mente Visionaria",
+    "mindLead": "Un dato bueno, leído con la mente equivocada, sigue siendo una mala decisión.",
+    "mind1Title": "Neuro-Check del día",
+    "mind1Body": "Un termómetro de cómo está tu cabeza para decidir hoy.",
+    "mind2Title": "Audio de foco",
+    "mind2Body": "Pistas para foco profundo y para revisar datos con calma.",
+    "mind3Title": "Alerta de sesgo",
+    "mind3Body": "Una pista del error de juicio del día, antes de cerrar la decisión.",
+    "plansTitle": "Plan Standard",
+    "monthlyBadge": "Standard mensual",
+    "monthlyName": "Standard",
+    "perMonth": "por mes",
+    "annualBadge": "Mejor oferta",
+    "annualName": "Standard anual",
+    "perYear": "por año",
+    "annualSave": "Ahorras {save}",
+    "annualNote": "Pagas el equivalente a 10 meses y usas los 12. Dos meses de bono.",
+    "monthly1": "Acceso a la plataforma Standard",
+    "monthly2": "Radar de señales de lanzamientos ya al aire",
+    "monthly3": "Radar de oportunidades y nivel de saturación",
+    "monthly4": "Mente Visionaria y Neuro-Check",
+    "monthly5": "Soporte por la comunidad",
+    "annual1": "Todo lo del plan mensual",
+    "annual2": "12 meses de acceso por el precio de 10",
+    "honestNote": "El SaaS organiza datos públicos. No garantiza ventas, comisiones ni ingresos.",
+    "communityTitle": "No decides solo",
+    "communityBody": "Al entrar en Radar Global formas parte de la comunidad en Hotmart, incluido el espacio Globais Mindset, para compartir experiencia, resolver dudas y avanzar con otros miembros.",
+    "faqTitle": "Preguntas frecuentes",
+    "faq1Q": "¿El Radar Global garantiza que voy a vender?",
+    "faq1A": "No. Es una herramienta de análisis de datos y de apoyo a la decisión. El resultado depende de tu esfuerzo, de tu estrategia y del mercado.",
+    "faq2Q": "¿Cuánto cuesta?",
+    "faq2A": "Standard mensual: {monthly} al contado, hasta que canceles. Standard anual: {annual} por 12 meses. Doce meses al precio mensual sumarían {was}. Ahorras {save}. Impuestos pueden aplicarse en el checkout de Hotmart.",
+    "faq3Q": "¿Necesito experiencia para usarlo?",
+    "faq3A": "No. El panel está pensado para ser directo: señal, evidencia y saturación del nicho, en un solo lugar.",
+    "faq4Q": "¿Puedo cancelar cuando quiera?",
+    "faq4A": "El mensual se cancela cuando quieras, sin burocracia, en Hotmart. El anual cubre 12 meses de acceso por el pago de {annual}.",
+    "faq5Q": "¿Cómo funciona el acceso después del pago?",
+    "faq5A": "Primero pagas. Después creas la cuenta con el mismo correo de la compra. El panel se abre cuando Hotmart confirma el pago.",
+    "finalTitle": "Mientras lo piensas, la cola de señales sigue",
+    "finalBody": "Únete a quien decide con datos públicos, no con suposiciones.",
+    "payNote": "Pago seguro vía Hotmart · Garantía de 7 días",
+    "companyTitle": "Quién ofrece el SaaS",
+    "companyBody": "Radar Global es operado por Loryn Begui. El pago lo procesa Hotmart. Contacto: instagram.com/robertac8luly · radar.rotadomilhao.store/contato",
+    "guaranteeTitle": "Garantía",
+    "guaranteeBody": "7 días para probar. Standard mensual {monthly}, hasta que canceles, o Standard anual {annual} por 12 meses. Sin promesa de ingresos, lucro o resultado financiero.",
+    "refundOnPage": "Reembolso: panel de Hotmart, con el correo de la compra. Política completa en /reembolso.",
+    "checkoutPending": "El enlace de pago de esta oferta todavía no está conectado. El precio de la página ya es el del plan Standard.",
+    "bumpBadge": "Order bump",
+    "bumpTitle": "Standard anual · 2 meses de bono",
+    "bumpBody": "Márcalo para pagar {annual} y usar 12 meses. Mismo SaaS. No es {was}. Sin promesa de ingresos.",
+    "bumpWas": "De {was}",
+    "bumpTotal": "Total {annual} · Euro · al contado",
+    "ctaBumpMonthly": "Suscribir Standard mensual · {monthly}",
+    "ctaBumpAnnual": "Suscribir Standard anual · {annual}",
+    "footer": "Radar Global · Euro · radar.rotadomilhao.store/standard",
+    "footerPressle": "Radar Global · Euro · radar.rotadomilhao.store/pressle-3"
+  },
   "funilEspanol": {
     "lock": "Euro · Español",
     "welcomeKicker": "Compra confirmada",
@@ -625,5 +759,245 @@
     "contactSite": "Sitio:",
     "contactSocial": "Instagram:",
     "contactPay": "Dudas de cobro, factura o reembolso: usa el soporte de Hotmart de la compra."
+  },
+  "momentum": {
+    "idealHint": "Ventana ideal de oportunidad",
+    "stages": {
+      "FRIO": "Frío",
+      "EMERGENTE": "Emergente",
+      "ACELERANDO": "Acelerando",
+      "HOT": "HOT",
+      "SATURANDO": "Saturando",
+      "SATURADO": "Saturado"
+    },
+    "markets": {
+      "US": "EE.UU.",
+      "UK": "UK",
+      "AU": "Australia",
+      "BR": "Brasil"
+    },
+    "formats": {
+      "course": "Curso",
+      "community": "Comunidad",
+      "mentorship": "Mentoría",
+      "ebook": "E-book",
+      "app": "App",
+      "newsletter": "Newsletter",
+      "aiProduct": "Producto con IA"
+    }
+  },
+  "oportunidades": {
+    "title": "Radar de Oportunidades",
+    "tagline": "Lo que está ganando fuerza antes de volverse mainstream.",
+    "monitorLabel": "Qué monitorear",
+    "happening": "Qué está pasando",
+    "whyRising": "Por qué está subiendo",
+    "stage": "Etapa",
+    "markets": "Mercados detectados",
+    "formats": "Oportunidades posibles",
+    "source": "Fuente de la señal",
+    "close": "Cerrar",
+    "trendsLive": "Google Trends · últimos 7 días, hora a hora",
+    "trendsLoading": "Leyendo Google Trends…",
+    "trendsRelative": "Interés relativo de búsqueda (0–100)",
+    "trendsUpdated": "Actualizado {time}",
+    "trendsFallback": "Google Trends no está disponible ahora. Mostrando la muestra anterior.",
+    "trendsQuery": "Búsqueda: {query}",
+    "trendsUp": "Búsquedas al alza {pct}%",
+    "trendsDown": "Búsquedas a la baja {pct}%",
+    "trendsFlat": "Búsquedas estables",
+    "extraSources": "Señales extra (lo que aún es pequeño)",
+    "extraWikipedia": "Wikipedia Pageviews",
+    "extraReddit": "Reddit · discusiones emergentes",
+    "extraViews": "views/7d",
+    "extraPosts": "posts/7d",
+    "extraOffline": "No disponible ahora",
+    "extraRedditHeat": "{upvotes} upvotes · {comments} comentarios (7d)",
+    "momentumConfidence": "Score cruzado {score}/100 · {up} de {live} fuentes al alza",
+    "categories": {
+      "mente-performance": {
+        "name": "Mente y Performance",
+        "monitor": "foco, hábitos, productividad, inteligencia emocional, neurociencia",
+        "happening": "Crecimiento de contenidos y productos relacionados con foco, claridad mental, performance cognitiva y adaptación a la era de la IA.",
+        "whyRising": "La IA está cambiando cómo las personas trabajan y crean, aumentando la demanda de productividad y diferenciación humana."
+      },
+      "ia-futuro": {
+        "name": "IA y Futuro",
+        "monitor": "agentes de IA, automatización, IA personal, nuevos workflows",
+        "happening": "Herramientas de agentes, automatizaciones personales y nuevos flujos de trabajo salen del nicho técnico y se vuelven producto de masas.",
+        "whyRising": "Quien no usa IA en el día a día siente retraso competitivo; el mercado responde con cursos, apps y comunidades de implementación."
+      },
+      "dinheiro-carreira": {
+        "name": "Dinero y Carrera",
+        "monitor": "nuevas profesiones, renta digital, creator economy, habilidades emergentes",
+        "happening": "Nuevas profesiones y formatos de renta digital todavía se están formando, con pocos productos maduros en el idioma local.",
+        "whyRising": "La creator economy y las habilidades emergentes (IA, ofertas digitales) reabren la conversación de carrera fuera del empleo tradicional."
+      },
+      "wellness-longevidade": {
+        "name": "Wellness y Longevidad",
+        "monitor": "sueño, salud cerebral, bienestar, longevidad",
+        "happening": "Sueño, salud cerebral y longevidad dejaron de ser solo clínicos y pasaron a contenido + producto de performance.",
+        "whyRising": "El Global Wellness Institute señala la mente y la adaptación digital como ejes de crecimiento en 2026."
+      },
+      "comportamento-lifestyle": {
+        "name": "Comportamiento y Lifestyle",
+        "monitor": "nuevos hábitos, comunidades, minimalismo, experiencias",
+        "happening": "Hábitos, comunidades y experiencias todavía generan contenido, pero la oferta ya es alta y la señal está fría.",
+        "whyRising": "La demanda existe, pero sin aceleración clara: mejor observar que lanzar ahora."
+      },
+      "creator-infoprodutos": {
+        "name": "Creator e Infoproductos",
+        "monitor": "nuevos formatos de contenido, comunidades, productos digitales",
+        "happening": "Los formatos de contenido e infoproductos siguen fuertes, pero la densidad de oferta se satura en varios nichos.",
+        "whyRising": "El mercado todavía compra, pero el costo de atención sube: ventana estrecha, riesgo de llegar tarde."
+      }
+    }
+  },
+  "menteVisionaria": {
+    "title": "Mente Visionaria",
+    "subtitle": "Inteligencia biológica para tomar mejores decisiones y alto rendimiento.",
+    "tagline": "Cómo el ser humano se adapta cognitivamente a un mundo dominado por la IA.",
+    "heroTitle": "Mente Visionaria",
+    "happening": "Crecimiento de contenidos y productos relacionados con foco, claridad mental, performance cognitiva y adaptación a la era de la IA.",
+    "whyRisingTitle": "Por qué está subiendo",
+    "whyRising": "La IA está cambiando cómo las personas trabajan y crean, aumentando la demanda de productividad y diferenciación humana.",
+    "stageTitle": "Etapa",
+    "marketsTitle": "Mercados detectados",
+    "formatsTitle": "Oportunidades posibles",
+    "subsTitle": "Subcategorías",
+    "subs": {
+      "foco": "Foco y Claridad Mental",
+      "regulacao": "Regulación del Sistema Nervioso",
+      "brainHealth": "Brain Health / Salud Cerebral",
+      "digital": "Adaptación al Entorno Digital",
+      "performance": "Performance Cognitiva",
+      "diferenciacao": "Diferenciación Humana en la Era de la IA"
+    },
+    "biasHeading": "Alerta de sesgo del día (evita errores de escala)",
+    "bias": {
+      "recurrence": {
+        "title": "Sesgo de recurrencia",
+        "body": "Una señal que subió hoy no garantiza que vaya a durar. Valida consistencia antes de escalar."
+      },
+      "fomo": {
+        "title": "Sesgo de FOMO",
+        "body": "¿Estás eligiendo este nicho por los datos o por el miedo a quedarte fuera?"
+      },
+      "herd": {
+        "title": "Sesgo de manada",
+        "body": "Que todo el mundo mine el mismo nicho no significa que aún haya espacio para ti."
+      },
+      "confirmation": {
+        "title": "Sesgo de confirmación",
+        "body": "¿Estás buscando solo evidencias que sostienen la decisión que ya tomaste?"
+      },
+      "recency": {
+        "title": "Sesgo de recencia",
+        "body": "El último lanzamiento que viste pesa más que el promedio de la semana. Mira la serie, no el último punto."
+      },
+      "sunk": {
+        "title": "Costo hundido",
+        "body": "Horas y dinero ya gastados no justifican seguir en un nicho saturado. Importa el siguiente paso."
+      },
+      "overconfidence": {
+        "title": "Exceso de confianza",
+        "body": "Una tarjeta Hot no es garantía. Alta confianza en el Radar aún pide evidencia y saturación."
+      },
+      "availability": {
+        "title": "Sesgo de disponibilidad",
+        "body": "El nicho que más aparece en el feed no es necesariamente el más viable. Menciones ≠ oportunidad."
+      },
+      "anchoring": {
+        "title": "Anclaje",
+        "body": "El primer número que viste (score, comisión, tendencia) no tiene que ser el único criterio."
+      },
+      "fatigue": {
+        "title": "Fatiga de decisión",
+        "body": "Demasiadas tarjetas, poca pausa. Si la mente está cansada, aplaza la elección de nicho hasta después del Neuro-Check."
+      },
+      "scarcity": {
+        "title": "Escasez artificial",
+        "body": "“Última plaza” y “todo el mundo está entrando” son gatillos. Comprueba si la señal sigue en Early."
+      },
+      "authority": {
+        "title": "Sesgo de autoridad",
+        "body": "Guru, grupo o ranking no sustituye el dato del Radar. Cruza fuente, saturación y consistencia."
+      },
+      "outcome": {
+        "title": "Sesgo de resultado",
+        "body": "Un afiliado ganó en el nicho X. Eso no prueba que la ventana siga abierta para ti."
+      },
+      "survivorship": {
+        "title": "Sesgo de supervivencia",
+        "body": "Ves a quien escaló. Casi nunca ves a quien saturó y salió. Pide el denominador, no solo a los ganadores."
+      }
+    },
+    "checklist": {
+      "title": "Decodificador de sesgos de minería",
+      "subtitle": "Checklist rápido antes de entrar en un nicho. No se guarda nada: es solo para que te escuches.",
+      "progress": "{done} de {total} respondidas",
+      "ok": "Bien. La mayoría de las respuestas apunta a una decisión con datos, no con impulso.",
+      "warn": "Considera revisar los datos antes de decidir. La mayoría de las respuestas indica sesgo emocional o falta de plan B.",
+      "reset": "Rehacer checklist",
+      "complete": "Checklist completo. Revisaste todos los puntos de sesgo.",
+      "q1": {
+        "prompt": "¿Estás eligiendo esta señal porque los datos muestran consistencia a lo largo de días, o porque apareció como Hot ahora?",
+        "safe": "Consistencia en los datos",
+        "bias": "Solo porque está Hot ahora"
+      },
+      "q2": {
+        "prompt": "¿Validaste el flujo/volumen de señales recientes, o estás confiando solo en la etiqueta de estado?",
+        "safe": "Validé el volumen reciente",
+        "bias": "Confié solo en la etiqueta"
+      },
+      "q3": {
+        "prompt": "Si este nicho satura en 2 semanas, ¿tendrías un plan B?",
+        "safe": "Tengo plan B",
+        "bias": "No tengo plan B"
+      },
+      "q4": {
+        "prompt": "¿La elección viene de los números del Radar o del miedo a quedarte fuera?",
+        "safe": "Viene de los números",
+        "bias": "Miedo a quedarme fuera"
+      },
+      "q5": {
+        "prompt": "¿Miraste la saturación del nicho (Hot / Moderado / Saturado) antes de imaginar la escala?",
+        "safe": "Miré la saturación",
+        "bias": "Salté la saturación"
+      }
+    },
+    "neuro": {
+      "kicker": "Neuro-Check del día",
+      "title": "Termómetro de resiliencia",
+      "question": "¿Cómo está tu mente para decidir hoy?",
+      "today": "Check-in de hoy",
+      "change": "Cambiar la respuesta de hoy",
+      "stressWarning": "Tu nivel de estrés está alto. Evita cambiar presupuestos de campañas en las próximas 2 horas para no actuar por impulso.",
+      "chartHint": "Últimos 14 días. Dorado = óptima · cian = neutra · amarillo = ansiosa · rojo = estresada.",
+      "moods": {
+        "OTIMA": "Óptima",
+        "NEUTRA": "Neutra",
+        "ANSIOSA": "Ansiosa",
+        "ESTRESSADA": "Estresada"
+      }
+    },
+    "audio": {
+      "kicker": "Audio-frecuencias de foco",
+      "title": "Dos modos de escucha",
+      "subtitle": "Foco profundo: Thai Resort. Análisis de datos: Calm Binaural Waves.",
+      "play": "Reproducir",
+      "pause": "Pausar",
+      "missing": "El archivo de audio aún no está en el aire.",
+      "creditPrefix": "Audio:",
+      "creditsAria": "Créditos de las pistas",
+      "focus": {
+        "name": "Foco profundo",
+        "use": "Ideal para crear campañas y copy"
+      },
+      "analysis": {
+        "name": "Análisis de datos",
+        "use": "Ideal para revisar métricas"
+      }
+    }
   }
 }
