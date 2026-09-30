@@ -24,6 +24,8 @@ model User {
   alerts              Alert[]
   auditLogs           AuditLog[]
   favorites           Favorite[]
+  neuroChecks         NeuroCheck[]
+  passwordResets      PasswordResetToken[]
   searches            Search[]
   subscription        Subscription?
   countries           Country[]     @relation("CountryToUser")
@@ -269,6 +271,28 @@ model Favorite {
   @@unique([userId, launchId])
 }
 
+model NeuroCheck {
+  id        String    @id @default(cuid())
+  userId    String
+  mood      NeuroMood
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
 model Search {
   id        String   @id @default(cuid())
   userId    String?
@@ -304,6 +328,13 @@ enum Role {
 enum AccessPlan {
   STANDARD
   PREMIUM
+}
+
+enum NeuroMood {
+  OTIMA
+  NEUTRA
+  ANSIOSA
+  ESTRESSADA
 }
 
 enum LaunchStatus {
