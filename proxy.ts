@@ -81,7 +81,7 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
-  const isPublic = publicPathnames.has(pathname);
+  const isPublic = publicPathnames.has(pathname) || pathname === "/p" || pathname.startsWith("/p/");
   const isAuthPage = authPathnames.has(pathname);
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
 

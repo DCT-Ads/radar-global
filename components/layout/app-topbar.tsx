@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
+import { AlertBell } from "@/components/alerts/alert-bell";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { MobileSidebar } from "@/components/layout/mobile-sidebar";
@@ -23,6 +24,7 @@ export async function AppTopbar({ user }: AppTopbarProps) {
         <p className="hidden text-sm text-muted-foreground sm:block">{t("dashboard")}</p>
       </div>
       <div className="flex items-center gap-3">
+        <AlertBell />
         <LocaleSwitcher />
         <div className="hidden items-center gap-2 sm:flex">
           <div className="text-right">
