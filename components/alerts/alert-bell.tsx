@@ -25,7 +25,8 @@ export function AlertBell() {
     const data: unknown = await res.json();
     if (!data || typeof data !== "object" || !("items" in data) || !Array.isArray(data.items)) return;
     setItems(data.items.slice(0, 6) as Notice[]);
-    setUnread(typeof data.unread === "number" ? data.unread : 0);
+    const unreadCount = "unread" in data && typeof data.unread === "number" ? data.unread : 0;
+    setUnread(unreadCount);
   }
 
   useEffect(() => {
