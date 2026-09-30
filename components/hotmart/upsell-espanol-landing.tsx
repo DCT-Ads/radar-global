@@ -16,7 +16,9 @@ export async function UpsellEspanolLanding() {
     <main className="relative min-h-screen bg-[#0B1C33] text-[#F5F7FA]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.16),transparent_55%)]" />
       <header className="relative z-10 mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
-        <p className="text-sm font-semibold tracking-wide text-[#D4AF37]">Radar Global</p>
+        <Link href="/planes" className="text-sm font-semibold tracking-wide text-[#D4AF37]">
+          Radar Global
+        </Link>
         <p className="rounded-full border border-[#D4AF37] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#D4AF37]">
           {t("lock")}
         </p>
