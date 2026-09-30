@@ -214,8 +214,7 @@ export async function runAlertSweep(options?: {
         if (sent.email === "failed") result.failed += 1;
       }
 
-      const digestHour = Math.min(23, Math.max(0, pref?.digestHour ?? 8));
-      if (digestEnabled && clock.hour === digestHour && pref?.lastDigestKey !== clock.dayKey) {
+      if (digestEnabled && pref?.lastDigestKey !== clock.dayKey) {
         const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const recent = dryRun
           ? [...createdImmediate, ...createdDigestOnly]
