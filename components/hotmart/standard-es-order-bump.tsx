@@ -14,6 +14,7 @@ type StandardEsOrderBumpProps = {
     bumpTotal: string;
     ctaMonthly: string;
     ctaBump: string;
+    pending: string;
   };
 };
 
@@ -22,9 +23,10 @@ export function StandardEsOrderBump({
   annualHref,
   annualPrice,
   copy,
-}: StandardEsOrderBumpProps) {
-  const [bump, setBump] = useState(false);
-  const href = bump ? annualHref || monthlyHref : monthlyHref;
+  defaultChecked = false,
+}: StandardEsOrderBumpProps & { defaultChecked?: boolean }) {
+  const [bump, setBump] = useState(defaultChecked);
+  const href = bump ? annualHref : monthlyHref;
   const ctaClass =
     "inline-flex h-11 w-full items-center justify-center rounded-md bg-[#D4AF37] px-6 text-sm font-semibold text-[#0B1C33] hover:bg-[#D4AF37]/90 sm:w-auto";
 
@@ -51,9 +53,13 @@ export function StandardEsOrderBump({
         </div>
       </label>
 
-      <a href={href} className={ctaClass}>
-        {bump ? copy.ctaBump : copy.ctaMonthly}
-      </a>
+      {href ? (
+        <a href={href} className={ctaClass}>
+          {bump ? copy.ctaBump : copy.ctaMonthly}
+        </a>
+      ) : (
+        <p className="text-xs text-[#8BA3B8]">{copy.pending}</p>
+      )}
     </div>
   );
 }

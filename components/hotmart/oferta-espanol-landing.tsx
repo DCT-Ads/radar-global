@@ -3,15 +3,19 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { EspanolOrderBump } from "@/components/hotmart/espanol-order-bump";
-import { PREMIUM_EUR_79, PREMIUM_EUR_PROMO } from "@/lib/auth/access";
+import { PREMIUM_EUR_79, PREMIUM_EUR_79_ANNUAL, PREMIUM_EUR_PROMO } from "@/lib/auth/access";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
 type EspanolVariant = "promo227" | "mensual79" | "pressle79";
 
 export async function OfertaEspanolLanding({
   variant = "promo227",
+  bumpDefault = false,
+  footerKey,
 }: {
   variant?: EspanolVariant;
+  bumpDefault?: boolean;
+  footerKey?: "footer7990" | "footer799";
 }) {
   const ns = variant === "promo227" ? "ofertaEspanol" : "ofertaEspanol79";
   const t = await getTranslations(ns);
@@ -149,11 +153,18 @@ export async function OfertaEspanolLanding({
         </h2>
         <div className="mx-auto max-w-xl rounded-2xl border border-[#D4AF37] bg-[#12263F]/80 p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#D4AF37]">
-            {t("promoBadge")}
+            {t(bumpDefault ? "annualLead" : "promoBadge")}
           </p>
-          <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">{t("premiumName")}</h3>
-          <p className="mt-2 text-3xl font-semibold">{price.monthly}</p>
-          <p className="text-xs text-[#8BA3B8]">{t("perMonth")}</p>
+          <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">
+            {t(bumpDefault ? "annualLead" : "premiumName")}
+          </h3>
+          <p className="mt-2 text-3xl font-semibold">
+            {bumpDefault ? PREMIUM_EUR_79_ANNUAL.total : price.monthly}
+          </p>
+          <p className="text-xs text-[#8BA3B8]">{t(bumpDefault ? "perYear" : "perMonth")}</p>
+          {bumpDefault ? (
+            <p className="mt-2 text-sm text-[#8BA3B8] line-through">{PREMIUM_EUR_79_ANNUAL.fullYearTotal}</p>
+          ) : null}
           <p className="mt-1 text-xs text-[#8BA3B8]">{price.cashNote}</p>
           <p className="text-xs text-[#8BA3B8]">{price.untilCancel}</p>
           <p className="mt-4 text-sm text-[#F5F7FA]">{t("premiumBody")}</p>
@@ -167,6 +178,7 @@ export async function OfertaEspanolLanding({
             <EspanolOrderBump
               monthlyHref={href}
               annualHref={annualHref}
+              defaultChecked={bumpDefault}
               copy={{
                 bumpBadge: t("bumpBadge"),
                 bumpTitle: t("bumpTitle"),
@@ -229,11 +241,12 @@ export async function OfertaEspanolLanding({
         </div>
         <p className="mt-10 text-xs text-[#8BA3B8]">
           {t(
-            variant === "pressle79"
-              ? "footerPressle"
-              : variant === "mensual79"
-                ? "footerMensual"
-                : "footer",
+            footerKey ??
+              (variant === "pressle79"
+                ? "footerPressle"
+                : variant === "mensual79"
+                  ? "footerMensual"
+                  : "footer"),
           )}
         </p>
         <nav className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-[#8BA3B8]">

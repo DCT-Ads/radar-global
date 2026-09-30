@@ -40,6 +40,23 @@ export const STANDARD_EUR = {
   untilCancel: "Hasta que el cliente cancele",
 } as const;
 
+/** Standard atualizado: 54,60 € / mes. 10 × 54,60 € = 546,00 €. 12 × 54,60 € = 655,20 €. */
+export const STANDARD_EUR_5460 = {
+  currency: "EUR",
+  monthly: "54,60 €",
+  monthlyLabel: "54,60 € / mes",
+  cashNote: "Mensual · al contado",
+  untilCancel: "Hasta que el cliente cancele",
+} as const;
+
+export const STANDARD_EUR_5460_ANNUAL = {
+  currency: "EUR",
+  total: "546,00 €",
+  totalLabel: "546,00 € / año",
+  was: "655,20 €",
+  save: "109,20 €",
+} as const;
+
 /** Standard anual: 10 × 45,50 € = 455,00 € (12 meses). 12 × 45,50 € = 546,00 €. */
 export const STANDARD_EUR_ANNUAL = {
   currency: "EUR",
@@ -63,8 +80,12 @@ export const PREMIUM_EUR_79_ANNUAL = {
   currency: "EUR",
   installment: "10× € 79,90",
   total: "€ 799,00",
+  totalPlain: "799,00 €",
+  monthlyPlain: "79,90 €",
   fullYear: "12× € 79,90",
   fullYearTotal: "€ 958,80",
+  was: "958,80 €",
+  save: "159,80 €",
 } as const;
 
 /** Premium promoción en español: € 227,50 / mes al contado, hasta cancelar. */

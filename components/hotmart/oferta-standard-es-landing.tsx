@@ -4,8 +4,15 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { SalesLegalFooter } from "@/components/hotmart/sales-legal-footer";
 import { PressleSitelinkScroll } from "@/components/hotmart/pressle-sitelink-scroll";
+import { PlanesChoice } from "@/components/hotmart/planes-choice";
 import { StandardEsOrderBump } from "@/components/hotmart/standard-es-order-bump";
-import { STANDARD_EUR, STANDARD_EUR_ANNUAL } from "@/lib/auth/access";
+import {
+  PREMIUM_EUR_79_ANNUAL,
+  STANDARD_EUR,
+  STANDARD_EUR_5460,
+  STANDARD_EUR_5460_ANNUAL,
+  STANDARD_EUR_ANNUAL,
+} from "@/lib/auth/access";
 import { hotmartCheckoutUrls } from "@/lib/hotmart-checkout";
 
 const ctaClass =
@@ -13,6 +20,53 @@ const ctaClass =
 
 const ctaOutlineClass =
   "inline-flex h-11 items-center justify-center rounded-md border border-[#D4AF37] bg-transparent px-6 text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10";
+
+function planesChoiceProps(
+  checkout: ReturnType<typeof hotmartCheckoutUrls>,
+  planesCopy: Awaited<ReturnType<typeof getTranslations>>,
+) {
+  const price = {
+    monthly: STANDARD_EUR_5460.monthly,
+    annual: STANDARD_EUR_5460_ANNUAL.total,
+    was: STANDARD_EUR_5460_ANNUAL.was,
+    save: STANDARD_EUR_5460_ANNUAL.save,
+    premiumMonthly: PREMIUM_EUR_79_ANNUAL.monthlyPlain,
+    premiumAnnual: PREMIUM_EUR_79_ANNUAL.totalPlain,
+    premiumWas: PREMIUM_EUR_79_ANNUAL.was,
+    premiumSave: PREMIUM_EUR_79_ANNUAL.save,
+  };
+
+  return {
+    standardMonthlyHref: checkout.standardEs5460,
+    standardAnnualHref: checkout.standardEs546,
+    premiumMonthlyHref: checkout.premiumEs79,
+    premiumAnnualHref: checkout.premiumEsAnnual,
+    title: planesCopy("modalTitle"),
+    accept: planesCopy("accept"),
+    decline: planesCopy("decline"),
+    pending: planesCopy("pending"),
+    closeLabel: planesCopy("close"),
+    standard: {
+      button: planesCopy("standardButton", price),
+      offer: planesCopy("standardOffer", price),
+      compare: planesCopy("standardCompare", price),
+      pay10: planesCopy("standardPay10", price),
+      perks: [] as string[],
+    },
+    premium: {
+      button: planesCopy("premiumButton", price),
+      offer: planesCopy("premiumOffer", price),
+      compare: planesCopy("premiumCompare", price),
+      pay10: planesCopy("premiumPay10", price),
+      perks: [
+        planesCopy("perk1"),
+        planesCopy("perk2"),
+        planesCopy("perk3"),
+        planesCopy("perk4"),
+      ],
+    },
+  };
+}
 
 function PayLink({
   href,
@@ -40,18 +94,29 @@ function PayLink({
 
 export async function OfertaStandardEsLanding({
   variant = "cards",
+  offer = "455",
+  bumpDefault = false,
 }: {
-  variant?: "cards" | "pressle";
+  variant?: "cards" | "pressle" | "planes";
+  offer?: "455" | "546";
+  bumpDefault?: boolean;
 }) {
   const t = await getTranslations("ofertaStandardEs");
+  const planesCopy = await getTranslations("ofertaPlanesEs");
   const home = await getTranslations("home");
   const checkout = hotmartCheckoutUrls();
+  const planes = variant === "planes";
+  const updated = offer === "546" || planes;
+  const monthlyPlan = updated ? STANDARD_EUR_5460 : STANDARD_EUR;
+  const annualPlan = updated ? STANDARD_EUR_5460_ANNUAL : STANDARD_EUR_ANNUAL;
   const price = {
-    monthly: STANDARD_EUR.monthly,
-    annual: STANDARD_EUR_ANNUAL.total,
-    was: STANDARD_EUR_ANNUAL.was,
-    save: STANDARD_EUR_ANNUAL.save,
+    monthly: monthlyPlan.monthly,
+    annual: annualPlan.total,
+    was: annualPlan.was,
+    save: annualPlan.save,
   };
+  const monthlyHref = updated ? checkout.standardEs5460 : checkout.standardEs;
+  const annualHref = updated ? checkout.standardEs546 : checkout.standardEsAnnual;
 
   return (
     <main className="relative min-h-screen bg-[#0B1C33] text-[#F5F7FA]">
@@ -77,14 +142,20 @@ export async function OfertaStandardEsLanding({
           {t("kicker")}
         </p>
         <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">
-          {t("headline")}
+          {t(planes ? "headline" : updated ? "headline546" : "headline")}
         </h1>
-        <p className="mt-4 max-w-2xl text-base text-[#8BA3B8] sm:text-lg">{t("subtitle")}</p>
-        <div className="mt-8">
-          <a href="#planos" className={ctaClass}>
-            {t("cta")}
-          </a>
-        </div>
+        <p className="mt-4 max-w-2xl text-base text-[#8BA3B8] sm:text-lg">
+          {planes ? planesCopy("subtitle") : t(updated ? "subtitle546" : "subtitle")}
+        </p>
+        {planes ? (
+          <PlanesChoice {...planesChoiceProps(checkout, planesCopy)} placement="hero" />
+        ) : (
+          <div className="mt-8">
+            <a href="#planos" className={ctaClass}>
+              {t("cta")}
+            </a>
+          </div>
+        )}
       </section>
 
       <section className="mx-auto max-w-5xl px-6 pb-12">
@@ -198,7 +269,9 @@ export async function OfertaStandardEsLanding({
 
       <section className="mx-auto max-w-5xl px-6 pb-12">
         <h2 className="mb-4 text-center text-2xl font-semibold text-[#D4AF37]">{t("isTitle")}</h2>
-        <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-[#8BA3B8]">{t("isBody")}</p>
+        <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-[#8BA3B8]">
+          {planes ? planesCopy("isBody") : t("isBody", price)}
+        </p>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
             <h3 className="text-lg font-semibold text-[#D4AF37]">{t("isNotTitle")}</h3>
@@ -206,7 +279,7 @@ export async function OfertaStandardEsLanding({
               <li>— {t("isNot1")}</li>
               <li>— {t("isNot2")}</li>
               <li>— {t("isNot3")}</li>
-              <li>— {t("isNot4")}</li>
+              <li>— {planes ? planesCopy("isNot4") : t("isNot4")}</li>
             </ul>
           </div>
           <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
@@ -231,17 +304,58 @@ export async function OfertaStandardEsLanding({
       </section>
 
       <section id="planos" className="mx-auto max-w-5xl scroll-mt-8 px-6 pb-12">
-        <h2 className="mb-4 text-center text-2xl font-semibold text-[#D4AF37]">{t("plansTitle")}</h2>
-        {variant === "pressle" ? (
+        <h2 className="mb-4 text-center text-2xl font-semibold text-[#D4AF37]">
+          {planes ? planesCopy("plansTitle") : t("plansTitle")}
+        </h2>
+        {planes ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#D4AF37]">
+                {planesCopy("standardBadge")}
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">{planesCopy("standardName")}</h3>
+              <p className="mt-2 text-3xl font-semibold">{STANDARD_EUR_5460.monthly}</p>
+              <p className="text-xs text-[#8BA3B8]">{t("perMonth")}</p>
+              <ul className="mt-4 space-y-2 text-sm text-[#F5F7FA]">
+                <li>✓ {t("monthly1")}</li>
+                <li>✓ {t("monthly2")}</li>
+                <li>✓ {t("monthly3")}</li>
+                <li>✓ {t("monthly4")}</li>
+                <li>✓ {t("monthly5")}</li>
+              </ul>
+              <p className="mt-3 text-xs text-[#8BA3B8]">{t("honestNote")}</p>
+              <PlanesChoice {...planesChoiceProps(checkout, planesCopy)} placement="standard" />
+            </div>
+            <div className="rounded-2xl border border-[#D4AF37] bg-[#12263F]/80 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#D4AF37]">
+                {planesCopy("premiumBadge")}
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">{planesCopy("premiumName")}</h3>
+              <p className="mt-2 text-3xl font-semibold">{PREMIUM_EUR_79_ANNUAL.monthlyPlain}</p>
+              <p className="text-xs text-[#8BA3B8]">{t("perMonth")}</p>
+              <ul className="mt-4 space-y-2 text-sm text-[#F5F7FA]">
+                <li>✓ {planesCopy("perk1")}</li>
+                <li>✓ {planesCopy("perk2")}</li>
+                <li>✓ {planesCopy("perk3")}</li>
+                <li>✓ {planesCopy("perk4")}</li>
+              </ul>
+              <p className="mt-3 text-xs text-[#8BA3B8]">{t("honestNote")}</p>
+              <PlanesChoice {...planesChoiceProps(checkout, planesCopy)} placement="premium" />
+            </div>
+          </div>
+        ) : variant === "pressle" ? (
           <div className="mx-auto max-w-xl rounded-2xl border border-[#D4AF37] bg-[#12263F]/80 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#D4AF37]">
-              {t("monthlyBadge")}
+              {t(bumpDefault ? "annualBadge" : "monthlyBadge")}
             </p>
-            <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">{t("monthlyName")}</h3>
-            <p className="mt-2 text-3xl font-semibold">{price.monthly}</p>
-            <p className="text-xs text-[#8BA3B8]">{t("perMonth")}</p>
-            <p className="mt-1 text-xs text-[#8BA3B8]">{STANDARD_EUR.cashNote}</p>
-            <p className="text-xs text-[#8BA3B8]">{STANDARD_EUR.untilCancel}</p>
+            <h3 className="mt-2 text-xl font-semibold text-[#D4AF37]">
+              {t(bumpDefault ? "annualName" : "monthlyName")}
+            </h3>
+            <p className="mt-2 text-3xl font-semibold">{bumpDefault ? price.annual : price.monthly}</p>
+            <p className="text-xs text-[#8BA3B8]">{t(bumpDefault ? "perYear" : "perMonth")}</p>
+            {bumpDefault ? <p className="mt-2 text-sm text-[#8BA3B8] line-through">{price.was}</p> : null}
+            <p className="mt-1 text-xs text-[#8BA3B8]">{monthlyPlan.cashNote}</p>
+            <p className="text-xs text-[#8BA3B8]">{monthlyPlan.untilCancel}</p>
             <ul className="mt-4 space-y-2 text-sm text-[#F5F7FA]">
               <li>✓ {t("monthly1")}</li>
               <li>✓ {t("monthly2")}</li>
@@ -251,9 +365,10 @@ export async function OfertaStandardEsLanding({
             </ul>
             <p className="mt-3 text-xs text-[#8BA3B8]">{t("honestNote")}</p>
             <StandardEsOrderBump
-              monthlyHref={checkout.standardEs}
-              annualHref={checkout.standardEsAnnual}
+              monthlyHref={monthlyHref}
+              annualHref={annualHref}
               annualPrice={price.annual}
+              defaultChecked={bumpDefault}
               copy={{
                 bumpBadge: t("bumpBadge"),
                 bumpTitle: t("bumpTitle"),
@@ -262,6 +377,7 @@ export async function OfertaStandardEsLanding({
                 bumpTotal: t("bumpTotal", price),
                 ctaMonthly: t("ctaBumpMonthly", price),
                 ctaBump: t("ctaBumpAnnual", price),
+                pending: t("checkoutPending"),
               }}
             />
           </div>
@@ -329,7 +445,7 @@ export async function OfertaStandardEsLanding({
           <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
             <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq2Q")}</h3>
             <p className="mt-2 text-sm text-[#8BA3B8]">
-              {t("faq2A", price)}
+              {planes ? planesCopy("faq2A") : t("faq2A", price)}
             </p>
           </div>
           <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
@@ -338,7 +454,9 @@ export async function OfertaStandardEsLanding({
           </div>
           <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
             <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq4Q")}</h3>
-            <p className="mt-2 text-sm text-[#8BA3B8]">{t("faq4A", price)}</p>
+            <p className="mt-2 text-sm text-[#8BA3B8]">
+              {planes ? planesCopy("faq4A") : t("faq4A", price)}
+            </p>
           </div>
           <div className="rounded-2xl border border-[#1E3A5F] bg-[#12263F]/80 p-5">
             <h3 className="text-sm font-semibold text-[#D4AF37]">{t("faq5Q")}</h3>
@@ -350,11 +468,15 @@ export async function OfertaStandardEsLanding({
       <section className="mx-auto max-w-3xl px-6 pb-12 text-center">
         <h2 className="text-2xl font-semibold text-[#D4AF37]">{t("finalTitle")}</h2>
         <p className="mt-3 text-sm text-[#8BA3B8]">{t("finalBody")}</p>
-        <div className="mt-6">
-          <a href="#planos" className={ctaClass}>
-            {t("ctaFinal")}
-          </a>
-        </div>
+        {planes ? (
+          <PlanesChoice {...planesChoiceProps(checkout, planesCopy)} placement="final" />
+        ) : (
+          <div className="mt-6">
+            <a href="#planos" className={ctaClass}>
+              {t("ctaFinal")}
+            </a>
+          </div>
+        )}
         <p className="mt-4 text-xs text-[#8BA3B8]">{t("payNote")}</p>
       </section>
 
@@ -365,7 +487,9 @@ export async function OfertaStandardEsLanding({
 
       <section className="mx-auto max-w-3xl px-6 pb-16 text-center">
         <h2 className="text-xl font-semibold text-[#D4AF37]">{t("guaranteeTitle")}</h2>
-        <p className="mt-2 text-sm text-[#8BA3B8]">{t("guaranteeBody", price)}</p>
+        <p className="mt-2 text-sm text-[#8BA3B8]">
+          {planes ? planesCopy("guaranteeBody") : t("guaranteeBody", price)}
+        </p>
         <p className="mt-2 text-sm text-[#8BA3B8]">{t("refundOnPage")}</p>
         <div className="mt-6">
           <Button asChild variant="outline">
@@ -373,7 +497,17 @@ export async function OfertaStandardEsLanding({
           </Button>
         </div>
         <p className="mt-10 text-xs text-[#8BA3B8]">
-          {t(variant === "pressle" ? "footerPressle" : "footer")}
+          {planes
+            ? planesCopy("footer")
+            : t(
+                updated
+                  ? bumpDefault
+                    ? "footer546"
+                    : "footer5460"
+                  : variant === "pressle"
+                    ? "footerPressle"
+                    : "footer",
+              )}
         </p>
         <SalesLegalFooter />
       </section>

@@ -21,8 +21,9 @@ export function EspanolOrderBump({
   monthlyHref,
   annualHref,
   copy,
-}: EspanolOrderBumpProps) {
-  const [bump, setBump] = useState(false);
+  defaultChecked = false,
+}: EspanolOrderBumpProps & { defaultChecked?: boolean }) {
+  const [bump, setBump] = useState(defaultChecked);
   const href = bump ? annualHref || monthlyHref : monthlyHref;
   const ctaClass =
     "inline-flex h-11 w-full items-center justify-center rounded-md bg-[#D4AF37] px-6 text-sm font-semibold text-[#0B1C33] hover:bg-[#D4AF37]/90 sm:w-auto";
