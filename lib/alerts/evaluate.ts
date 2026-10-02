@@ -15,7 +15,7 @@ export type WatchedLaunch = {
 
 export type NoticeDraft = {
   dedupeKey: string;
-  kind: "stage" | "growth" | "related";
+  kind: "stage" | "growth" | "related" | "acceleration" | "garimpo";
   launchId: string;
   title: string;
   body: string;

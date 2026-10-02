@@ -12,6 +12,7 @@
   "nav": {
     "dashboard": "Panel",
     "progress": "Mi Progreso",
+    "referral": "Invita y gana",
     "admin": "Admin",
     "login": "Entrar",
     "signup": "Crear cuenta",
@@ -41,6 +42,8 @@
     "noAccount": "¿Aún no tienes cuenta?",
     "invalidCredentials": "Correo o contraseña inválidos.",
     "emailTaken": "Este correo ya está registrado.",
+    "referralSelf": "Este enlace no puede usarse en tu propia cuenta.",
+    "referralRate": "Este enlace ya creó una cuenta desde esta dirección hoy. Prueba mañana.",
     "genericError": "Algo salió mal. Inténtalo de nuevo.",
     "forgotLink": "Olvidé la contraseña",
     "forgotTitle": "Restablecer contraseña",
@@ -277,6 +280,8 @@
   "radar": {
     "title": "Radar",
     "subtitle": "Lanzamientos verificados, ordenados por la ventana de oro.",
+    "garimpo": "Búsqueda de prometedores",
+    "garimpoEmpty": "Ningún lanzamiento pasó los tres criterios ahora: 3 a 7 días, Hot y aceleración de 300% o más.",
     "earlySignal": "Early Signal",
     "dataQuality": "Calidad de datos",
     "firstSeen": "Primera vista",
@@ -312,6 +317,8 @@
     "goToRadar": "Ir al Radar",
     "add": "Monitorizar este lanzamiento",
     "remove": "Dejar de monitorizar",
+    "added": "Añadido a tus monitorizados.",
+    "removed": "Quitado de tus monitorizados.",
     "savedAt": "Guardado",
     "updatedThisWeek": "Actualizado esta semana",
     "updatedSinceSave": "Cambió desde que lo guardaste",
@@ -380,6 +387,9 @@
     "copies": "Copies",
     "published": "Preventas en el aire",
     "views": "Visitas",
+    "clicks": "clics",
+    "conversion": "Conversión del CTA",
+    "copiesChart": "Copies en los últimos días",
     "tableTitle": "Tus preventas",
     "empty": "Todavía no hay preventa guardada.",
     "visits": "visitas",
@@ -405,6 +415,35 @@
     "premiumNote": "Estás en el plan completo. El gráfico de 90 días y los alertas diarios ya están contigo.",
     "standardNote": "En Premium, el resumen diario avisa cuando un monitorizado cambia de etapa y el gráfico abre 90 días.",
     "seePremium": "Ver Premium"
+  },
+  "referral": {
+    "title": "Invita y gana",
+    "subtitle": "El crédito entra solo cuando la persona invitada paga un plan.",
+    "linkLabel": "Tu enlace",
+    "copy": "Copiar enlace",
+    "copied": "Copiado",
+    "count": "Ya invitaste a {invited} personas, y {paid} ya son suscriptores de pago.",
+    "progress": "Próximo hito: {current} de {goal} de pago",
+    "milestone3": "3 de pago: nicho exclusivo",
+    "milestone5": "5 de pago: Premium por 3 meses",
+    "unlocked": "Nicho exclusivo liberado",
+    "unlockedBody": "El hito de 3 pagos activos está contigo. Si alguien cancela y la cuenta baja de 3, esta liberación se revoca.",
+    "lockedNiche": "El nicho exclusivo se abre con 3 invitados de pago activos.",
+    "history": "Recompensas",
+    "empty": "Todavía no hay recompensas.",
+    "creditNote": "El mes gratis suma 30 días de acceso en la próxima renovación confirmada por Hotmart. Hotmart sigue cobrando el valor completo: este panel no borra esa factura.",
+    "discountNote": "El 30% queda registrado para la próxima mensualidad. Hotmart sigue cobrando el valor completo hasta aplicar el crédito en la renovación.",
+    "types": {
+      "FREE_MONTH": "1 mes gratis",
+      "DISCOUNT": "30% en la próxima mensualidad",
+      "NICHE_FEATURE": "Nicho exclusivo",
+      "UPGRADE_3_MONTHS": "Premium por 3 meses"
+    },
+    "statuses": {
+      "ACTIVE": "activa",
+      "REVOKED": "revocada",
+      "EXPIRED": "cerrada"
+    }
   },
   "alerts": {
     "title": "Alertas",
@@ -452,7 +491,8 @@
     "title": "Esta cuenta todavía no tiene suscripción.",
     "body": "El Radar se abre después del pago en Hotmart. Elige el plan y suscríbete — crear una cuenta no libera el acceso.",
     "ctaStandard": "Suscribir Standard",
-    "ctaPremium": "Suscribir Premium"
+    "ctaPremium": "Suscribir Premium",
+    "switchAccount": "Salir y entrar con otra cuenta"
   },
   "upgrade": {
     "title": "Mejora a Premium",
@@ -883,6 +923,7 @@
     "ctaPremium": "Suscribir Premium",
     "unpaidTitle": "Esta cuenta todavía no tiene suscripción.",
     "unpaidBody": "El Radar se abre después del pago en Hotmart. Suscríbete al Premium — crear una cuenta no libera el acceso.",
+    "switchAccount": "Salir y entrar con otra cuenta",
     "footerGracias": "Radar Global · Euro · radar.rotadomilhao.store/gracias",
     "footerBienvenido": "Radar Global · Euro · radar.rotadomilhao.store/bienvenido",
     "footerMasTarde": "Radar Global · Euro · radar.rotadomilhao.store/mas-tarde",
@@ -1133,7 +1174,12 @@
     },
     "kickstart": {
       "kicker": "Brain Kickstart",
-      "greeting": "Buenos días, Visionario."
+      "greeting": "Buenos días, Visionario.",
+      "hackTitle": "🎯 Prompt del día",
+      "copy": "Copiar prompt",
+      "copied": "Copiado",
+      "why": "💡 Por qué funciona:",
+      "use": "🔧 Úsalo en:"
     },
     "audio": {
       "kicker": "Audio-frecuencias de foco",

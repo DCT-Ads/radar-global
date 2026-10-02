@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { radarLaunchInclude, toRadarLaunchRow, type RadarLaunchRow } from "@/lib/radar/list";
 import { loadKeywordVolumeIndex } from "@/lib/signals/keyword-volume";
@@ -39,6 +40,28 @@ export async function toggleFavorite(
 
   await prisma.favorite.create({ data: { userId, launchId } });
   return { favorited: true };
+}
+
+/** Mesma gravação da estrela, só inclui. Se já existe, não duplica e não remove. */
+export async function ensureFavorite(
+  userId: string,
+  launchId: string,
+): Promise<{ created: boolean }> {
+  const launch = await prisma.launch.findUnique({
+    where: { id: launchId },
+    select: { id: true },
+  });
+  if (!launch) return { created: false };
+
+  try {
+    await prisma.favorite.create({ data: { userId, launchId } });
+    return { created: true };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { created: false };
+    }
+    throw error;
+  }
 }
 
 function latestActivityAt(launch: {

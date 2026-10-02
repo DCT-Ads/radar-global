@@ -13,8 +13,10 @@ import {
 import { deliverAlert, normalizeChannel } from "@/lib/alerts/deliver";
 import { renderChangeEmail, renderDigestEmail } from "@/lib/alerts/email";
 import { emailLocale } from "@/lib/email/weekly-copy";
-import { listMonitoredLaunches } from "@/lib/favorites/monitor";
+import { ensureFavorite, listMonitoredLaunches } from "@/lib/favorites/monitor";
 import { prisma } from "@/lib/prisma";
+import { listVerifiedRadarLaunches, type RadarLaunchRow } from "@/lib/radar/list";
+import { acceleratingPair, isPromisingGarimpo } from "@/lib/radar/promising";
 
 export type AlertRunResult = {
   users: number;
@@ -81,6 +83,16 @@ export async function runAlertSweep(options?: {
     dryRun,
   };
 
+  const radarRows = await listVerifiedRadarLaunches();
+  const promising = radarRows.filter((row) =>
+    isPromisingGarimpo({
+      firstSeenAt: row.firstSeenAt,
+      saturation: row.saturation,
+      signalDates: row.signalDates,
+      now,
+    }),
+  );
+
   const users = await prisma.user.findMany({
     where: {
       favorites: { some: {} },
@@ -145,6 +157,19 @@ export async function runAlertSweep(options?: {
             ...next.filter((draft) => draft.kind === "stage" || (digestEnabled && draft.kind === "growth")),
           );
         }
+        const rising = acceleratingPair(row.signalDates);
+        if (rising) {
+          drafts.push({
+            dedupeKey: `accel:${row.id}:${rising.previousDay}:${rising.latestDay}`,
+            kind: "acceleration",
+            launchId: row.id,
+            title: row.title,
+            body: accelerationBody(locale),
+            href: `/launches/${row.id}`,
+            fromStage: null,
+            toStage: null,
+          });
+        }
         const seen = watched.lastSaturation !== null || watched.lastEarlySignal !== null;
         if (!seen) result.seeded += 1;
         if (!dryRun) {
@@ -156,6 +181,15 @@ export async function runAlertSweep(options?: {
             },
           });
         }
+      }
+
+      for (const row of promising) {
+        if (snapById.has(row.id)) continue;
+        if (!dryRun) {
+          const saved = await ensureFavorite(user.id, row.id);
+          if (!saved.created) continue;
+        }
+        drafts.push(garimpoAddedDraft(row, locale, now));
       }
 
       if (digestEnabled) {
@@ -184,7 +218,9 @@ export async function runAlertSweep(options?: {
         }
       }
 
-      const immediate = drafts.filter((draft) => draft.kind === "stage");
+      const immediate = drafts.filter(
+        (draft) => draft.kind === "stage" || draft.kind === "acceleration" || draft.kind === "garimpo",
+      );
       const createdImmediate = await insertDrafts(user.id, immediate, dryRun);
       const createdDigestOnly = await insertDrafts(
         user.id,
@@ -279,5 +315,96 @@ export async function runAlertSweep(options?: {
     }
   }
 
+  if (promising.length > 0) {
+    const freshUsers = await prisma.user.findMany({
+      where: {
+        favorites: { none: {} },
+        OR: [
+          { role: "ADMIN" },
+          { subscription: { is: { status: "ACTIVE", plan: { slug: { not: "FREE" } } } } },
+        ],
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        locale: true,
+        role: true,
+        plan: true,
+        subscription: { select: { status: true, plan: { select: { slug: true } } } },
+      },
+      take: limit,
+    });
+
+    for (const user of freshUsers) {
+      if (!hasPaidAccess(user)) continue;
+      result.users += 1;
+      const locale: Locale = emailLocale(user.locale);
+      const premium = hasPremiumAccess(user);
+      try {
+        const pref = await prisma.alertPreference.findUnique({ where: { userId: user.id } });
+        const drafts: NoticeDraft[] = [];
+        for (const row of promising) {
+          if (!dryRun) {
+            const saved = await ensureFavorite(user.id, row.id);
+            if (!saved.created) continue;
+          }
+          drafts.push(garimpoAddedDraft(row, locale, now));
+        }
+        const created = await insertDrafts(user.id, drafts, dryRun);
+        result.notices += created.length;
+        if (created.length > 0 && !dryRun) {
+          const mail = renderChangeEmail({ locale, name: user.name, items: created });
+          const sent = await deliverAlert({
+            channel: normalizeChannel(pref?.channel),
+            premium,
+            to: user.email,
+            whatsappOptIn: Boolean(pref?.whatsappOptIn),
+            subject: mail.subject,
+            html: mail.html,
+          });
+          if (sent.whatsapp === "not_configured") result.whatsappPending += 1;
+          if (sent.email === "sent") {
+            result.emails += 1;
+            await prisma.inboxNotice.updateMany({
+              where: { userId: user.id, dedupeKey: { in: created.map((item) => item.dedupeKey) } },
+              data: { emailedAt: now },
+            });
+          }
+          if (sent.email === "failed") result.failed += 1;
+        }
+      } catch (error) {
+        result.failed += 1;
+        console.error("[alerts] garimpo user failed", user.email, error);
+      }
+    }
+  }
+
   return result;
+}
+
+function accelerationBody(locale: Locale) {
+  if (locale === "en") return "The product you are watching is still accelerating!";
+  if (locale === "es") return "¡El producto que estás monitoreando sigue acelerando!";
+  return "O produto que você monitorou continua acelerando!";
+}
+
+function garimpoAddedBody(locale: Locale) {
+  if (locale === "en") return "A new promising product was added to your watchlist automatically.";
+  if (locale === "es") return "Un producto prometedor nuevo se añadió automáticamente a tus monitorizados.";
+  return "Um novo produto promissor foi adicionado automaticamente.";
+}
+
+function garimpoAddedDraft(row: RadarLaunchRow, locale: Locale, now: Date): NoticeDraft {
+  const day = now.toISOString().slice(0, 10);
+  return {
+    dedupeKey: `garimpo:${row.id}:${day}`,
+    kind: "garimpo",
+    launchId: row.id,
+    title: row.title,
+    body: garimpoAddedBody(locale),
+    href: `/launches/${row.id}`,
+    fromStage: null,
+    toStage: null,
+  };
 }

@@ -12,6 +12,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "progress": "My Progress",
+    "referral": "Refer and earn",
     "admin": "Admin",
     "login": "Log in",
     "signup": "Sign up",
@@ -41,6 +42,8 @@
     "noAccount": "Don't have an account?",
     "invalidCredentials": "Invalid email or password.",
     "emailTaken": "This email is already registered.",
+    "referralSelf": "This link cannot be used on your own account.",
+    "referralRate": "This link already created an account from this address today. Try again tomorrow.",
     "genericError": "Something went wrong. Try again.",
     "forgotLink": "Forgot password",
     "forgotTitle": "Reset password",
@@ -277,6 +280,8 @@
   "radar": {
     "title": "Radar",
     "subtitle": "Verified launches, ranked by the golden window.",
+    "garimpo": "Promising picks",
+    "garimpoEmpty": "Nothing passed the three checks right now: 3 to 7 days old, Hot, and acceleration of 300% or more.",
     "earlySignal": "Early Signal",
     "dataQuality": "Data quality",
     "firstSeen": "First seen",
@@ -312,6 +317,8 @@
     "goToRadar": "Go to Radar",
     "add": "Watch this launch",
     "remove": "Stop watching",
+    "added": "Added to your watchlist.",
+    "removed": "Removed from your watchlist.",
     "savedAt": "Saved",
     "updatedThisWeek": "Updated this week",
     "updatedSinceSave": "Changed since you saved it",
@@ -380,6 +387,9 @@
     "copies": "Copies",
     "published": "Live presells",
     "views": "Visits",
+    "clicks": "clicks",
+    "conversion": "CTA conversion",
+    "copiesChart": "Copies over recent days",
     "tableTitle": "Your presells",
     "empty": "No presell saved yet.",
     "visits": "visits",
@@ -405,6 +415,35 @@
     "premiumNote": "You are on the full plan. The 90-day chart and the daily alerts are already yours.",
     "standardNote": "On Premium, the daily digest tells you when a watched item changes stage, and the chart opens to 90 days.",
     "seePremium": "See Premium"
+  },
+  "referral": {
+    "title": "Refer and earn",
+    "subtitle": "The credit lands only after the referred person pays for a plan.",
+    "linkLabel": "Your link",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "count": "You have referred {invited} people, and {paid} are paying subscribers.",
+    "progress": "Next milestone: {current} of {goal} paying",
+    "milestone3": "3 paying: exclusive niche",
+    "milestone5": "5 paying: Premium for 3 months",
+    "unlocked": "Exclusive niche unlocked",
+    "unlockedBody": "The 3 active paying referrals milestone is yours. If someone cancels and the count drops below 3, this unlock is revoked.",
+    "lockedNiche": "The exclusive niche opens at 3 active paying referrals.",
+    "history": "Rewards",
+    "empty": "No rewards yet.",
+    "creditNote": "The free month adds 30 days of access on the next renewal confirmed by Hotmart. Hotmart still invoices the full amount: this panel does not erase that charge.",
+    "discountNote": "The 30% discount is recorded for the next monthly charge. Hotmart still bills the full price until that credit is applied on renewal.",
+    "types": {
+      "FREE_MONTH": "1 free month",
+      "DISCOUNT": "30% off the next month",
+      "NICHE_FEATURE": "Exclusive niche",
+      "UPGRADE_3_MONTHS": "Premium for 3 months"
+    },
+    "statuses": {
+      "ACTIVE": "active",
+      "REVOKED": "revoked",
+      "EXPIRED": "ended"
+    }
   },
   "alerts": {
     "title": "Alerts",
@@ -452,7 +491,8 @@
     "title": "This account has no subscription yet.",
     "body": "Radar unlocks after you pay on Hotmart. Pick a plan and subscribe — signing up alone does not grant access.",
     "ctaStandard": "Subscribe Standard",
-    "ctaPremium": "Subscribe Premium"
+    "ctaPremium": "Subscribe Premium",
+    "switchAccount": "Log out and use another account"
   },
   "upgrade": {
     "title": "Upgrade to Premium",
@@ -883,6 +923,7 @@
     "ctaPremium": "Suscribir Premium",
     "unpaidTitle": "Esta cuenta todavía no tiene suscripción.",
     "unpaidBody": "El Radar se abre después del pago en Hotmart. Suscríbete al Premium — crear una cuenta no libera el acceso.",
+    "switchAccount": "Salir y entrar con otra cuenta",
     "footerGracias": "Radar Global · Euro · radar.rotadomilhao.store/gracias",
     "footerBienvenido": "Radar Global · Euro · radar.rotadomilhao.store/bienvenido",
     "footerMasTarde": "Radar Global · Euro · radar.rotadomilhao.store/mas-tarde",
@@ -1133,7 +1174,12 @@
     },
     "kickstart": {
       "kicker": "Brain Kickstart",
-      "greeting": "Good morning, Visionary."
+      "greeting": "Good morning, Visionary.",
+      "hackTitle": "🎯 Prompt of the day",
+      "copy": "Copy prompt",
+      "copied": "Copied",
+      "why": "💡 Why it works:",
+      "use": "🔧 Use in:"
     },
     "audio": {
       "kicker": "Focus audio frequencies",

@@ -27,6 +27,7 @@ export type RadarLaunchRow = {
   evidenceCount: number;
   goldenWindow: number;
   verified: boolean;
+  signalDates: Date[];
 };
 
 export const radarLaunchInclude = {
@@ -105,6 +106,7 @@ export function toRadarLaunchRow(
     evidenceCount,
     goldenWindow: goldenWindowRank(scored.earlySignal, saturation, daysAgo),
     verified: launch.signals.length > 0,
+    signalDates: launch.signals.map((signal) => signal.discoveredAt),
   };
 }
 

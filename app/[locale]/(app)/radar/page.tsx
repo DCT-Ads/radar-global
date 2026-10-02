@@ -1,115 +1,92 @@
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
-import { SignalTableSaturation } from "@/components/admin/signal-table-saturation";
+import { RadarLaunchCard, radarLaunchCardLabels } from "@/components/radar/radar-launch-card";
 import { RadarShell } from "@/components/radar/radar-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
+import { Card, CardContent } from "@/components/ui/card";
 import { assertLocale } from "@/i18n/routing";
 import { canSeeUpcomingLaunches } from "@/lib/auth/access";
 import { getCurrentUser } from "@/lib/auth/session";
-import { formatRelativeTime } from "@/lib/format/relative-time";
+import { Link } from "@/i18n/navigation";
+import { listFavoriteLaunchIds } from "@/lib/favorites/monitor";
 import { listVerifiedRadarLaunches } from "@/lib/radar/list";
+import { isPromisingGarimpo } from "@/lib/radar/promising";
 
 type RadarPageProps = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ garimpo?: string }>;
 };
 
-export default async function RadarPage({ params }: RadarPageProps) {
+export default async function RadarPage({ params, searchParams }: RadarPageProps) {
   const { locale } = await params;
+  const garimpo = (await searchParams).garimpo === "1";
   setRequestLocale(assertLocale(locale));
   const t = await getTranslations("radar");
+  const monitor = await getTranslations("monitorados");
   const common = await getTranslations("common");
   const format = await getFormatter();
   const user = await getCurrentUser();
-  const rows = await listVerifiedRadarLaunches({
-    includeUpcoming: canSeeUpcomingLaunches(user),
-  });
+  const [rows, favoriteIds] = await Promise.all([
+    listVerifiedRadarLaunches({
+      includeUpcoming: canSeeUpcomingLaunches(user),
+    }),
+    user ? listFavoriteLaunchIds(user.id) : Promise.resolve(new Set<string>()),
+  ]);
   const empty = common("insufficientData");
   const formatAbsolute = (date: Date) =>
     format.dateTime(date, { dateStyle: "medium", timeStyle: "short" });
+  const labels = radarLaunchCardLabels(t, {
+    add: monitor("add"),
+    remove: monitor("remove"),
+    added: monitor("added"),
+    removed: monitor("removed"),
+  });
+  const visible = garimpo
+    ? rows.filter((row) =>
+        isPromisingGarimpo({
+          firstSeenAt: row.firstSeenAt,
+          saturation: row.saturation,
+          signalDates: row.signalDates,
+        }),
+      )
+    : rows;
 
   return (
     <RadarShell>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#D4AF37]">{t("title")}</h1>
-          <p className="mt-1 text-sm text-[#8BA3B8]">{t("subtitle")}</p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-[#D4AF37]">{t("title")}</h1>
+            <p className="mt-1 text-sm text-[#8BA3B8]">{t("subtitle")}</p>
+          </div>
+          <Link
+            href={garimpo ? "/radar" : "/radar?garimpo=1"}
+            className={
+              garimpo
+                ? "rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0B1C33]"
+                : "rounded-full border border-[#D4AF37]/50 px-4 py-2 text-sm font-semibold text-[#D4AF37]"
+            }
+          >
+            {t("garimpo")}
+          </Link>
         </div>
 
-        {rows.length === 0 ? (
+        {visible.length === 0 ? (
           <Card className="border-[#1E3A5F] bg-[#12263F]/80 text-[#F5F7FA]">
             <CardContent className="pt-6">
-              <p className="text-sm text-[#8BA3B8]">{empty}</p>
+              <p className="text-sm text-[#8BA3B8]">{garimpo ? t("garimpoEmpty") : empty}</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
-            {rows.map((row) => (
-              <Card
+            {visible.map((row) => (
+              <RadarLaunchCard
                 key={row.id}
-                className="border-[#1E3A5F] bg-[#12263F]/80 text-[#F5F7FA]"
-              >
-                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg text-[#D4AF37]">
-                      <Link href={`/launches/${row.id}`} className="hover:underline">
-                        {row.title}
-                      </Link>
-                    </CardTitle>
-                    <p className="text-sm text-[#8BA3B8]">{row.domain}</p>
-                    <p className="text-xs text-[#8BA3B8]">
-                      <Link href={`/producers/${row.producer.id}`} className="hover:text-[#00C2CB]">
-                        {row.producer.name}
-                      </Link>
-                      {row.niche ? ` · ${row.niche}` : ""}
-                      {row.keyword ? ` · ${row.keyword}` : ""}
-                    </p>
-                  </div>
-                  <SignalTableSaturation
-                    level={row.saturation}
-                    upcoming={row.upcoming}
-                    labels={{
-                      saturated: t("satSaturated"),
-                      moderate: t("satWarning"),
-                      hot: t("satSafe"),
-                      upcomingLaunch: t("upcoming"),
-                      unknown: t("satUnknown"),
-                    }}
-                  />
-                </CardHeader>
-                <CardContent className="flex flex-wrap items-end justify-between gap-4">
-                  <div className="flex gap-6">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#8BA3B8]">
-                        {t("earlySignal")}
-                      </p>
-                      <p className="text-2xl font-semibold text-[#F5F7FA]">
-                        {row.earlySignal == null ? empty : row.earlySignal}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#8BA3B8]">
-                        {t("firstSeen")}
-                      </p>
-                      <p className="text-sm text-[#F5F7FA]">
-                        {formatRelativeTime(row.firstSeenAt, locale) || empty}
-                      </p>
-                      <p className="text-xs text-[#8BA3B8]">{formatAbsolute(row.firstSeenAt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-[#8BA3B8]">
-                        {t("evidence")}
-                      </p>
-                      <p className="text-sm text-[#F5F7FA]">{row.evidenceCount}</p>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/launches/${row.id}`}
-                    className="text-sm font-medium text-[#00C2CB] hover:underline"
-                  >
-                    {t("openLaunch")}
-                  </Link>
-                </CardContent>
-              </Card>
+                row={row}
+                locale={locale}
+                favorited={favoriteIds.has(row.id)}
+                empty={empty}
+                formatAbsolute={formatAbsolute}
+                labels={labels}
+              />
             ))}
           </div>
         )}
